@@ -40,8 +40,8 @@ func main() {
 	fmt.Printf("🔧 Sorcerer model temperature: %.2f\n", temperature)
 
 	chatModelId := "openai/" + helpers.GetEnvOrDefault("CHAT_MODEL", "ai/qwen2.5:1.5B-F16")
-	//embeddingModelId := "openai/" + helpers.GetEnvOrDefault("EMBEDDING_MODEL", "ai/mxbai-embed-large")
-	embeddingModelId := helpers.GetEnvOrDefault("EMBEDDING_MODEL", "ai/mxbai-embed-large")
+	//embeddingsModelId := "openai/" + helpers.GetEnvOrDefault("EMBEDDING_MODEL", "ai/mxbai-embed-large")
+	embeddingsModelId := helpers.GetEnvOrDefault("EMBEDDING_MODEL", "ai/mxbai-embed-large")
 
 	g := genkit.Init(ctx, genkit.WithPlugins(&openai.OpenAI{
 		APIKey: "tada",
@@ -78,7 +78,7 @@ func main() {
 	
 	
 	
-	embedder, vectorStore, err := GenerateEmbeddings(ctx, engineURL, embeddingModelId, chunks)
+	embedder, vectorStore, err := GenerateEmbeddings(ctx, engineURL, embeddingsModelId, chunks)
 	if err != nil {
 		log.Fatal("😡:", err)
 	}

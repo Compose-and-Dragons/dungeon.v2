@@ -24,7 +24,6 @@ services:
       SIMILARITY_THRESHOLD: 0.5
       SIMILARITY_MAX_RESULTS: 3
 
-      
     models:
       chat-model:
         endpoint_var: MODEL_RUNNER_BASE_URL
