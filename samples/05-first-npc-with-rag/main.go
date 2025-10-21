@@ -83,22 +83,9 @@ func main() {
 		log.Fatal("😡:", err)
 	}
 	fmt.Printf("🧠 Created vector store with %d records\n", len(vectorStore.Records))
-	fmt.Println(embedder.Name())
 	// Create the memory vector retriever
 	memoryRetriever := rag.DefineMemoryVectorRetriever(g, &vectorStore, embedder)
 	fmt.Println("✅ Embeddings generated and vector store ready with", len(vectorStore.Records), "records")
-
-	fmt.Println(memoryRetriever.Name())
-
-	// TODO: create a vector store per agent
-
-	//modelId := "openai/ai/qwen2.5:0.5B-F16"
-
-	/* NOTE:
-	   - What is your role?
-	   - Who are you?
-	   - What is your class?
-	*/
 
 	for {
 		reader := bufio.NewReader(os.Stdin)
@@ -232,7 +219,6 @@ func RetrieveSimilarDocuments(ctx context.Context, query string, retriever ai.Re
 	}
 
 	similarDocuments := ""
-	//details := make([]SimilarityDetail, 0, len(retrieveResponse.Documents))
 	fmt.Println("--------------------------------------------------")
 	fmt.Printf("\n📘 Found %d similar documents:\n", len(retrieveResponse.Documents))
 	for i, doc := range retrieveResponse.Documents {
@@ -244,11 +230,6 @@ func RetrieveSimilarDocuments(ctx context.Context, query string, retriever ai.Re
 		fmt.Printf("   Content: %s\n\n", content)
 
 		similarDocuments += content
-		// details = append(details, SimilarityDetail{
-		// 	ID:         id,
-		// 	Similarity: similarity,
-		// 	Content:    content,
-		// })
 	}
 	
 	fmt.Println("--------------------------------------------------")
