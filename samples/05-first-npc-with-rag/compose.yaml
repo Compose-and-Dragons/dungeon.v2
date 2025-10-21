@@ -1,0 +1,43 @@
+services:
+  sorcerer-agent:
+    tty: true
+    stdin_open: true
+    build:
+      context: .
+      dockerfile_inline: |
+        FROM golang:1.25.1-alpine
+        WORKDIR /app
+        COPY . .
+
+        RUN go mod tidy
+        RUN go build -o sorcerer-agent main.go
+        #ENTRYPOINT ["./sorcerer-agent"]
+    environment:
+      SORCERER_SYSTEM_INSTRUCTIONS_PATH: /app/data/sorcerer_system_instructions.md
+      SORCERER_CONTEXT_PATH: /app/data/sorcerer_background_and_personality.md
+      SORCERER_NAME: Elara
+      VECTOR_STORES_PATH: /app/data
+
+      CHUNK_SIZE: 512
+      CHUNK_OVERLAP: 256
+
+      SORCERER_MODEL_TEMPERATURE: 0.0
+      SORCERER_MODEL_TOP_P: 0.9
+
+      SIMILARITY_THRESHOLD: 0.5
+      SIMILARITY_MAX_RESULTS: 3
+
+      
+    models:
+      chat-model:
+        endpoint_var: MODEL_RUNNER_BASE_URL
+        model_var: CHAT_MODEL
+      embedding-model:
+        endpoint_var: MODEL_RUNNER_BASE_URL
+        model_var: EMBEDDING_MODEL
+
+models:
+  chat-model:
+    model: ai/qwen2.5:1.5B-F16
+  embedding-model:
+    model: ai/mxbai-embed-large
