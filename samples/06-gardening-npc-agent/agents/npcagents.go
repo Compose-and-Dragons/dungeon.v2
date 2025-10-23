@@ -147,7 +147,6 @@ func (agent *NPCAgent) CompletionWithSimilaritySearch(ctx context.Context, confi
 	agent.SimilaritySearch(ctx, config, userMessage)
 
 	return agent.Completion(ctx, config, userMessage)
-
 }
 
 func (agent *NPCAgent) StreamCompletion(ctx context.Context, config Config, userMessage string, callback ai.ModelStreamCallback) (string, error) {
