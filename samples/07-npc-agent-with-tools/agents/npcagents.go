@@ -214,7 +214,7 @@ func (agent *NPCAgent) DetectAndExecuteToolCalls(ctx context.Context, config Con
 
 	history := []*ai.Message{}
 
-	// Only displayed if enabled via env var
+	// Only displayed if enabled via env var ...
 	displayToolsList(config.Tools)
 
 	// IMPORTANT:
