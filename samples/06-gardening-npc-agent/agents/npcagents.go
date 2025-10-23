@@ -40,15 +40,15 @@ type NPCAgent struct {
 	systemInstructions string
 	//backgroundContext  string
 
-	memoryVectorStore     rag.MemoryVectorStore
-	embedder        ai.Embedder
-	memoryRetriever ai.Retriever
+	memoryVectorStore rag.MemoryVectorStore
+	embedder          ai.Embedder
+	memoryRetriever   ai.Retriever
 }
 
 func (agent *NPCAgent) Initialize(ctx context.Context, config Config, name string) {
 	// Initialization logic for the NPC agent
 	oaiPlugin := &openai.OpenAI{
-		APIKey: "tada",
+		APIKey: "I💙DockerModelRunner",
 		Opts: []option.RequestOption{
 			option.WithBaseURL(config.EngineURL),
 		},
@@ -180,7 +180,6 @@ func (agent *NPCAgent) StreamCompletion(ctx context.Context, config Config, user
 	return fullResponse.Text(), nil
 }
 
-
 func (agent *NPCAgent) StreamCompletionWithSimilaritySearch(ctx context.Context, config Config, userMessage string, callback ai.ModelStreamCallback) (string, error) {
 
 	// Retrieve relevant context from the vector store
@@ -231,7 +230,7 @@ func generateEmbeddings(ctx context.Context, engineURL string, embeddingModelId 
 	}
 
 	oaiPlugin := &openai.OpenAI{
-		APIKey: "tada",
+		APIKey: "I💙DockerModelRunner",
 		Opts: []option.RequestOption{
 			option.WithBaseURL(engineURL),
 		},

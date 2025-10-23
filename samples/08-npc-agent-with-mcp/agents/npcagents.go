@@ -4,9 +4,9 @@ import (
 	"bufio"
 	"context"
 	"fmt"
-	"npc-agent-with-tools/helpers"
-	"npc-agent-with-tools/msg"
-	"npc-agent-with-tools/rag"
+	"npc-agent-with-mcp/helpers"
+	"npc-agent-with-mcp/msg"
+	"npc-agent-with-mcp/rag"
 	"os"
 	"strings"
 

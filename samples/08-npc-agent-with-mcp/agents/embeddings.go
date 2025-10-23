@@ -3,8 +3,8 @@ package agents
 import (
 	"context"
 	"fmt"
-	"npc-agent-with-tools/msg"
-	"npc-agent-with-tools/rag"
+	"npc-agent-with-mcp/msg"
+	"npc-agent-with-mcp/rag"
 
 	"github.com/firebase/genkit/go/ai"
 	"github.com/firebase/genkit/go/genkit"

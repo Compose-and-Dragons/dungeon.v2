@@ -14,7 +14,7 @@ import (
 func main() {
 	ctx := context.Background()
 	g := genkit.Init(ctx, genkit.WithPlugins(&openai.OpenAI{
-		APIKey: "tada",
+		APIKey: "I💙DockerModelRunner",
 		Opts: []option.RequestOption{
 			option.WithBaseURL("http://localhost:12434/engines/v1/"),
 		},
@@ -24,7 +24,7 @@ func main() {
 
 	_, err := genkit.Generate(ctx, g,
 		ai.WithModelName(modelId),
-		
+
 		ai.WithSystem("You are an expert of medieval role playing games."),
 		ai.WithPrompt("[Brief] What is a dungeon crawler game?"),
 

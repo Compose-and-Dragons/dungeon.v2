@@ -14,7 +14,7 @@ import (
 func main() {
 	ctx := context.Background()
 	g := genkit.Init(ctx, genkit.WithPlugins(&openai.OpenAI{
-		APIKey: "tada",
+		APIKey: "I💙DockerModelRunner",
 		Opts: []option.RequestOption{
 			option.WithBaseURL("http://localhost:12434/engines/v1/"),
 		},

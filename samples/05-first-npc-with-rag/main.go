@@ -31,7 +31,6 @@ func main() {
 	temperature := helpers.StringToFloat(helpers.GetEnvOrDefault("SORCERER_MODEL_TEMPERATURE", "0.0"))
 	topP := helpers.StringToFloat(helpers.GetEnvOrDefault("SORCERER_MODEL_TOP_P", "0.9"))
 
-
 	fmt.Printf("🔧 Using model runner at %s\n", engineURL)
 	fmt.Printf("🔧 Similarity search limit: %.2f\n", similaritySearchLimit)
 	fmt.Printf("🔧 Similarity search max results: %d\n", similaritySearchMaxResults)
@@ -44,7 +43,7 @@ func main() {
 	embeddingsModelId := helpers.GetEnvOrDefault("EMBEDDING_MODEL", "ai/mxbai-embed-large")
 
 	g := genkit.Init(ctx, genkit.WithPlugins(&openai.OpenAI{
-		APIKey: "tada",
+		APIKey: "I💙DockerModelRunner",
 		Opts: []option.RequestOption{
 			option.WithBaseURL(engineURL),
 		},
@@ -75,9 +74,7 @@ func main() {
 	//chunks := rag.ChunkText(backgroundAndPersonality, chunkSize, chunkOverlap)
 
 	chunks := rag.ChunkWithMarkdownHierarchy(backgroundAndPersonality)
-	
-	
-	
+
 	embedder, vectorStore, err := GenerateEmbeddings(ctx, engineURL, embeddingsModelId, chunks)
 	if err != nil {
 		log.Fatal("😡:", err)
@@ -159,7 +156,7 @@ func GenerateEmbeddings(ctx context.Context, engineURL string, embeddingModelId 
 	}
 
 	oaiPlugin := &openai.OpenAI{
-		APIKey: "tada",
+		APIKey: "I💙DockerModelRunner",
 		Opts: []option.RequestOption{
 			option.WithBaseURL(engineURL),
 		},
@@ -193,7 +190,6 @@ func GenerateEmbeddings(ctx context.Context, engineURL string, embeddingModelId 
 	return embedder, store, nil
 	// TODO: save to a JSON file and retrive from there
 }
-
 
 // RetrieveSimilarDocuments performs similarity search and returns relevant context with details
 func RetrieveSimilarDocuments(ctx context.Context, query string, retriever ai.Retriever) (string, error) {
@@ -231,7 +227,7 @@ func RetrieveSimilarDocuments(ctx context.Context, query string, retriever ai.Re
 
 		similarDocuments += content
 	}
-	
+
 	fmt.Println("--------------------------------------------------")
 	fmt.Println()
 	return similarDocuments, nil

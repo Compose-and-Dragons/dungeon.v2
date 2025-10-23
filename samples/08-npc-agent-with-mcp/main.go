@@ -4,16 +4,13 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"npc-agent-with-tools/agents"
-	"npc-agent-with-tools/helpers"
+	"npc-agent-with-mcp/agents"
+	"npc-agent-with-mcp/helpers"
+	"npc-agent-with-mcp/tools"
+	"os"
 	"strings"
-	"time"
 
-	"math/rand"
-
-	"github.com/firebase/genkit/go/ai"
-	"github.com/firebase/genkit/go/genkit"
-	"github.com/firebase/genkit/go/plugins/compat_oai/openai"
+	"github.com/firebase/genkit/go/plugins/mcp"
 )
 
 type DiceRollInput struct {
@@ -45,6 +42,11 @@ func main() {
 	embeddingsModelId := helpers.GetEnvOrDefault("EMBEDDING_MODEL", "ai/mxbai-embed-large")
 	toolsModelId := "openai/" + helpers.GetEnvOrDefault("TOOLS_MODEL", "hf.co/menlo/jan-nano-gguf:q4_k_m")
 
+	fmt.Println("🌍 LLM URL:", engineURL)
+	fmt.Println("🤖 Chat Model:", chatModelId)
+	fmt.Println("📝 Embeddings Model:", embeddingsModelId)
+	fmt.Println("🛠️ Tools Model:", toolsModelId)
+
 	agentName := helpers.GetEnvOrDefault("SORCERER_NAME", "Elara")
 
 	similaritySearchLimit := helpers.StringToFloat(helpers.GetEnvOrDefault("SIMILARITY_LIMIT", "0.5"))
@@ -53,25 +55,20 @@ func main() {
 	temperature := helpers.StringToFloat(helpers.GetEnvOrDefault("SORCERER_MODEL_TEMPERATURE", "0.0"))
 	topP := helpers.StringToFloat(helpers.GetEnvOrDefault("SORCERER_MODEL_TOP_P", "0.9"))
 
-	g := genkit.Init(ctx, genkit.WithPlugins(&openai.OpenAI{
-		APIKey: "I💙DockerModelRunner",
-		// Opts: []option.RequestOption{
-		// 	option.WithBaseURL("http://localhost:12434/engines/v1/"),
-		// },
-	}))
-
-	// Define tools
-	diceRollTool := genkit.DefineTool(g, "roll_dice", "Roll n dice with n faces each",
-		func(ctx *ai.ToolContext, input DiceRollInput) (DiceRollResult, error) {
-			return rollDice(input.NumDice, input.NumFaces), nil
+	mcpClient, err := mcp.NewGenkitMCPClient(mcp.MCPClientOptions{
+		Name: "c&d",
+		StreamableHTTP: &mcp.StreamableHTTPConfig{
+			BaseURL: helpers.GetEnvOrDefault("MCP_SERVER_BASE_URL", "http://localhost:9011"), // docker-mcp-gateway
 		},
-	)
+	})
 
-	characterNameTool := genkit.DefineTool(g, "generate_character_name", "Generate a D&D character name for a specific race",
-		func(ctx *ai.ToolContext, input CharacterNameInput) (CharacterNameResult, error) {
-			return generateCharacterName(input.Race), nil
-		},
-	)
+	if err != nil {
+		fmt.Println("😡 Error connecting Docker MCP Gateway:", err)
+		os.Exit(1)
+	}
+
+	// Register MCP tools once
+	toolsRefs := tools.Catalog(ctx, mcpClient)
 
 	config := agents.Config{
 		EngineURL:                  engineURL,
@@ -82,7 +79,7 @@ func main() {
 		ChatModelId:                chatModelId,
 		EmbeddingsModelId:          embeddingsModelId,
 		ToolsModelId:               toolsModelId,
-		Tools:                      []ai.ToolRef{diceRollTool, characterNameTool},
+		Tools:                      toolsRefs,
 	}
 
 	sorcererAgent := agents.NPCAgent{}
@@ -126,8 +123,10 @@ func main() {
 	fmt.Println(strings.Repeat("=", 50))
 
 	toolCallsResult, err = sorcererAgent.DetectAndExecuteToolCalls(ctx, config, `
+		Say hello to the world.
 		Generate a character name for a human.
 		Finally, roll 2 dices with 10 faces each.
+		Say hello world to Bob Morane.
 	`)
 	if err != nil {
 		log.Fatal("😡:", err)
@@ -137,47 +136,4 @@ func main() {
 	fmt.Println("🛠️ Final Answer:\n", toolCallsResult.LastMessage)
 	//sorcererAgent.LoopCompletion(ctx, config)
 
-}
-
-func rollDice(numDice, numFaces int) DiceRollResult {
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	rolls := make([]int, numDice)
-	total := 0
-
-	for i := 0; i < numDice; i++ {
-		roll := r.Intn(numFaces) + 1
-		rolls[i] = roll
-		total += roll
-	}
-
-	return DiceRollResult{
-		Rolls: rolls,
-		Total: total,
-	}
-}
-
-func generateCharacterName(race string) CharacterNameResult {
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-
-	namesByRace := map[string][]string{
-		"elf":      {"Aerdrie", "Ahvonna", "Aramil", "Aranea", "Berrian", "Caelynn", "Carric", "Dayereth", "Enna", "Galinndan"},
-		"dwarf":    {"Adrik", "Baern", "Darrak", "Eberk", "Fargrim", "Gardain", "Harbek", "Kildrak", "Morgran", "Thorek"},
-		"human":    {"Aerdrie", "Aramil", "Berris", "Cithreth", "Dayereth", "Enna", "Galinndan", "Hadarai", "Immeral", "Lamlis"},
-		"halfling": {"Alton", "Ander", "Bernie", "Bobbin", "Cade", "Callus", "Corrin", "Dannad", "Garret", "Lindal"},
-		"orc":      {"Gash", "Gell", "Henk", "Holg", "Imsh", "Keth", "Krusk", "Mhurren", "Ront", "Shump"},
-		"tiefling": {"Akmenos", "Amnon", "Barakas", "Damakos", "Ekemon", "Iados", "Kairon", "Leucis", "Melech", "Mordai"},
-	}
-
-	raceLower := strings.ToLower(race)
-	names, exists := namesByRace[raceLower]
-	if !exists {
-		names = namesByRace["human"] // Default to human names
-	}
-
-	selectedName := names[r.Intn(len(names))]
-
-	return CharacterNameResult{
-		Name: selectedName,
-		Race: race,
-	}
 }

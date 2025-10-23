@@ -17,7 +17,7 @@ import (
 func main() {
 	ctx := context.Background()
 	g := genkit.Init(ctx, genkit.WithPlugins(&openai.OpenAI{
-		APIKey: "tada",
+		APIKey: "I💙DockerModelRunner",
 		Opts: []option.RequestOption{
 			option.WithBaseURL("http://localhost:12434/engines/v1/"),
 		},
@@ -73,7 +73,7 @@ func main() {
 		fullResponse, err := genkit.Generate(ctx, g,
 			ai.WithModelName(modelId),
 			ai.WithSystem(
-				string(systemInstructions) + "\n" + string(backgroundAndPersonality),
+				string(systemInstructions)+"\n"+string(backgroundAndPersonality),
 			),
 			// WithMessages sets the messages.
 			// These messages will be sandwiched between the system and user prompts.
