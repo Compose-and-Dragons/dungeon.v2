@@ -13,24 +13,6 @@ import (
 	"github.com/firebase/genkit/go/plugins/mcp"
 )
 
-type DiceRollInput struct {
-	NumDice  int `json:"num_dice"`
-	NumFaces int `json:"num_faces"`
-}
-
-type DiceRollResult struct {
-	Rolls []int `json:"rolls"`
-	Total int   `json:"total"`
-}
-
-type CharacterNameInput struct {
-	Race string `json:"race"`
-}
-
-type CharacterNameResult struct {
-	Name string `json:"name"`
-	Race string `json:"race"`
-}
 
 func main() {
 	ctx := context.Background()
