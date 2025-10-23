@@ -40,7 +40,7 @@ func main() {
 
 	//engineURL := helpers.GetEnvOrDefault("MODEL_RUNNER_BASE_URL", "http://localhost:12434/engines/llama.cpp/v1")
 	engineURL := helpers.GetEnvOrDefault("MODEL_RUNNER_BASE_URL", "http://localhost:12434/engines/v1/")
-	// IMPORTANT: prefix with "openai/" to use the OpenAI plugin TODO: make this automatic 
+	// IMPORTANT: prefix with "openai/" to use the OpenAI plugin TODO: make this automatic
 	chatModelId := "openai/" + helpers.GetEnvOrDefault("CHAT_MODEL", "ai/qwen2.5:1.5B-F16")
 	embeddingsModelId := helpers.GetEnvOrDefault("EMBEDDING_MODEL", "ai/mxbai-embed-large")
 	toolsModelId := "openai/" + helpers.GetEnvOrDefault("TOOLS_MODEL", "hf.co/menlo/jan-nano-gguf:q4_k_m")
@@ -110,10 +110,10 @@ func main() {
 	// 	log.Fatal("😡:", err)
 	// }
 
-	toolCallsResult, err := sorcererAgent.DetectAndExecuteToolCalls(ctx, config, `
-		Roll 3 dice with 6 faces each. 
+	toolCallsResult, err := sorcererAgent.DetectAndExecuteToolCallsWithConfirmation(ctx, config, `
+		Roll 3 dices with 6 faces each. 
 		Then generate a character name for an elf.
-		Finally, roll 2 dice with 8 faces each.
+		Finally, roll 2 dices with 8 faces each.
 		After that, generate a character name for a dwarf.
 	`)
 	if err != nil {
@@ -123,7 +123,18 @@ func main() {
 	fmt.Println("🛠️ Results:\n", toolCallsResult.Results)
 	fmt.Println("🛠️ Final Answer:\n", toolCallsResult.LastMessage)
 
+	fmt.Println(strings.Repeat("=", 50))
 
+	toolCallsResult, err = sorcererAgent.DetectAndExecuteToolCalls(ctx, config, `
+		Generate a character name for a human.
+		Finally, roll 2 dices with 10 faces each.
+	`)
+	if err != nil {
+		log.Fatal("😡:", err)
+	}
+	fmt.Println("🛠️ Total calls:", toolCallsResult.TotalCalls)
+	fmt.Println("🛠️ Results:\n", toolCallsResult.Results)
+	fmt.Println("🛠️ Final Answer:\n", toolCallsResult.LastMessage)
 	//sorcererAgent.LoopCompletion(ctx, config)
 
 }
