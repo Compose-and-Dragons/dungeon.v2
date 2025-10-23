@@ -101,7 +101,7 @@ func (agent *NPCAgent) InitializeVectorStoreFromFile(ctx context.Context, config
 	return nil
 }
 
-func (agent *NPCAgent) Completion(ctx context.Context, config Config, userMessage string, callback ai.ModelStreamCallback) (string, error) {
+func (agent *NPCAgent) StreamCompletion(ctx context.Context, config Config, userMessage string, callback ai.ModelStreamCallback) (string, error) {
 
 	// Retrieve relevant context from the vector store
 	similarDocuments, err := retrieveSimilarDocuments(ctx, userMessage, agent.memoryRetriever, config.SimilaritySearchLimit, config.SimilaritySearchMaxResults)
@@ -164,10 +164,13 @@ func (agent *NPCAgent) LoopCompletion(ctx context.Context, config Config) {
 			continue
 		}
 
-		agent.Completion(ctx, config, userMessage, func(ctx context.Context, chunk *ai.ModelResponseChunk) error {
+		agent.StreamCompletion(ctx, config, userMessage, func(ctx context.Context, chunk *ai.ModelResponseChunk) error {
 			fmt.Print(chunk.Text())
 			return nil
 		})
+
+		fmt.Println()
+		fmt.Println()
 
 	}
 }
