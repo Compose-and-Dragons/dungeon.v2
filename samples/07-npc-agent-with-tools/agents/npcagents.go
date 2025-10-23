@@ -204,8 +204,164 @@ func (agent *NPCAgent) StreamCompletionWithSimilaritySearch(ctx context.Context,
 
 }
 
+// executeTool executes a tool without confirmation
+//
+// Flow:
+//   ┌─────────────────┐
+//   │  executeTool    │
+//   └────────┬────────┘
+//            │
+//            ▼
+//   ┌─────────────────┐
+//   │ tool.RunRaw()   │
+//   └────────┬────────┘
+//            │
+//            ▼
+//   ┌─────────────────┐
+//   │ Append result   │
+//   │ to history      │
+//   └─────────────────┘
+func (agent *NPCAgent) executeTool(ctx context.Context, req *ai.ToolRequest, tool ai.Tool, history *[]*ai.Message, toolCallsResults *[]any) error {
+	output, err := tool.RunRaw(ctx, req.Input)
+	if err != nil {
+		msg.DisplayError(fmt.Sprintf("😡 tool %q execution failed:", tool.Name()), err)
+		return err
+	}
 
-func (agent *NPCAgent) DetectAndExecuteToolCalls(ctx context.Context, config Config, userMessage string) (*ToolCallsResult, error) {
+	msg.DisplayToolMessages(fmt.Sprintf("🤖 Result: %v", output))
+
+	*toolCallsResults = append(*toolCallsResults, map[string]any{
+		"tool_name":   req.Name,
+		"tool_ref":    req.Ref,
+		"tool_output": output,
+	})
+
+	// Add tool response to history
+	part := ai.NewToolResponsePart(&ai.ToolResponse{
+		Name:   req.Name,
+		Ref:    req.Ref,
+		Output: output,
+	})
+
+	// Append tool response to history
+	*history = append(*history, ai.NewMessage(ai.RoleTool, nil, part))
+	return nil
+}
+
+// executeToolWithConfirmation asks for user confirmation before executing a tool
+//
+// Flow:
+//   ┌─────────────────────────-─┐
+//   │executeToolWithConfirmation│
+//   └────────────┬────────────-─┘
+//                │
+//                ▼
+//   ┌────────────────────────-──┐
+//   │ Prompt user: y/n/q?       │
+//   └────────────┬────────────-─┘
+//                │
+//       ┌────────┼────────┐
+//       │        │        │
+//       ▼        ▼        ▼
+//    ┌───┐   ┌───┐   ┌───┐
+//    │ y │   │ n │   │ q │
+//    └─┬─┘   └─┬─┘   └─┬─┘
+//      │       │       │
+//      │       │       └──► Set stopped=true
+//      │       │
+//      │       └──► Append "cancelled" to history
+//      │
+//      └──► Call executeTool()
+func (agent *NPCAgent) executeToolWithConfirmation(ctx context.Context, req *ai.ToolRequest, tool ai.Tool, history *[]*ai.Message, toolCallsResults *[]any, stopped *bool) {
+	var response string
+	for {
+		fmt.Printf("Do you want to execute tool %q? (y/n/q): ", req.Name)
+		_, err := fmt.Scanln(&response)
+		if err != nil {
+			msg.DisplayError("😡 Error reading input:", err)
+			continue
+		}
+		response = strings.ToLower(strings.TrimSpace(response))
+
+		switch response {
+		case "q":
+			fmt.Println("👋 Exiting the program.")
+			*stopped = true
+			return
+		case "y":
+			agent.executeTool(ctx, req, tool, history, toolCallsResults)
+			return
+		case "n":
+
+			fmt.Println("⏩ Skipping tool execution.", req.Name, req.Ref)
+
+			*toolCallsResults = append(*toolCallsResults, map[string]any{
+				"tool_name":   req.Name,
+				"tool_ref":    req.Ref,
+				"tool_output": "Tool execution cancelled by user",
+			})
+
+			// Add tool response indicating the tool was not executed
+			part := ai.NewToolResponsePart(&ai.ToolResponse{
+				Name:   req.Name,
+				Ref:    req.Ref,
+				Output: map[string]any{"error": "Tool execution cancelled by user"},
+			})
+
+			*history = append(*history, ai.NewMessage(ai.RoleTool, nil, part))
+			return
+		default:
+			fmt.Println("Please enter 'y' or 'n'.")
+			continue
+		}
+
+	}
+}
+
+// toolExecutorFunc is a function type for executing tools
+type toolExecutorFunc func(ctx context.Context, req *ai.ToolRequest, tool ai.Tool, history *[]*ai.Message, toolCallsResults *[]any, stopped *bool)
+
+// detectAndExecuteToolCallsLoop is the core loop for detecting and executing tool calls
+// It takes an executor function as parameter to customize the execution behavior
+//
+// Flow:
+//   ┌────────────────────────────────┐
+//   │ detectAndExecuteToolCallsLoop  │
+//   └──────────────┬─────────────────┘
+//                  │
+//                  ▼
+//   ┌──────────────────────────────┐
+//   │ Add user message to history  │
+//   └──────────────┬───────────────┘
+//                  │
+//          ┌───────▼───────┐
+//          │  Loop: while  │
+//          │  !stopped     │
+//          └───────┬───────┘
+//                  │
+//                  ▼
+//   ┌──────────────────────────────┐
+//   │ Generate AI response with    │
+//   │ tool detection               │
+//   └──────────────┬───────────────┘
+//                  │
+//          ┌───────▼───────────┐
+//          │ Tool requests     │
+//          │ found?            │
+//          └───────┬───────────┘
+//                  │
+//          ┌───────┼───────┐
+//          │               │
+//          ▼ No            ▼ Yes
+//   ┌──────────┐    ┌──────────────────┐
+//   │  Stop    │    │ For each tool:   │
+//   │  loop    │    │ 1. Find tool     │
+//   └──────────┘    │ 2. Call executor │
+//                   └────────┬─────────┘
+//                            │
+//                            └──► Loop back
+//
+func (agent *NPCAgent) detectAndExecuteToolCallsLoop(ctx context.Context, config Config, userMessage string, executor toolExecutorFunc) (*ToolCallsResult, error) {
 
 	stopped := false
 	lastToolAssistantMessage := ""
@@ -283,76 +439,8 @@ func (agent *NPCAgent) DetectAndExecuteToolCalls(ctx context.Context, config Con
 				continue
 			}
 
-			// STEP 2: Ask for tool execution confirmation
-			execWithConfirmation := func() {
-				var response string
-				for {
-					fmt.Printf("Do you want to execute tool %q? (y/n/q): ", req.Name)
-					_, err := fmt.Scanln(&response)
-					if err != nil {
-						msg.DisplayError("😡 Error reading input:", err)
-						continue
-					}
-					response = strings.ToLower(strings.TrimSpace(response))
-
-					switch response {
-					case "q":
-						fmt.Println("👋 Exiting the program.")
-						stopped = true
-						return
-					case "y":
-						output, err := tool.RunRaw(ctx, req.Input)
-						if err != nil {
-							msg.DisplayError(fmt.Sprintf("😡 tool %q execution failed:", tool.Name()), err)
-							continue
-						}
-
-						msg.DisplayToolMessages(fmt.Sprintf("🤖 Result: %v", output))
-
-						toolCallsResults = append(toolCallsResults, map[string]any{
-							"tool_name":   req.Name,
-							"tool_ref":    req.Ref,
-							"tool_output": output,
-						})
-
-						// Add tool response to history
-						part := ai.NewToolResponsePart(&ai.ToolResponse{
-							Name:   req.Name,
-							Ref:    req.Ref,
-							Output: output,
-						})
-
-						// Append tool response to history
-						history = append(history, ai.NewMessage(ai.RoleTool, nil, part))
-						return
-					case "n":
-
-						fmt.Println("⏩ Skipping tool execution.", req.Name, req.Ref)
-
-						toolCallsResults = append(toolCallsResults, map[string]any{
-							"tool_name":   req.Name,
-							"tool_ref":    req.Ref,
-							"tool_output": "Tool execution cancelled by user",
-						})
-
-						// Add tool response indicating the tool was not executed
-						part := ai.NewToolResponsePart(&ai.ToolResponse{
-							Name:   req.Name,
-							Ref:    req.Ref,
-							Output: map[string]any{"error": "Tool execution cancelled by user"},
-						})
-
-						history = append(history, ai.NewMessage(ai.RoleTool, nil, part))
-						return
-					default:
-						fmt.Println("Please enter 'y' or 'n'.")
-						continue
-					}
-
-				}
-
-			}
-			execWithConfirmation()
+			// STEP 2: Execute tool using the provided executor
+			executor(ctx, req, tool, &history, &toolCallsResults, &stopped)
 		}
 
 	} // END: of [TOOL CALLS] detection loop
@@ -363,6 +451,86 @@ func (agent *NPCAgent) DetectAndExecuteToolCalls(ctx context.Context, config Con
 		Results:     toolCallsResults,
 		LastMessage: lastToolAssistantMessage,
 	}, nil
+}
+
+// DetectAndExecuteToolCalls detects and executes tool calls automatically (no confirmation)
+//
+// Flow:
+//   ┌──────────────────────────────┐
+//   │ DetectAndExecuteToolCalls    │
+//   └──────────────┬───────────────┘
+//                  │
+//                  │ Creates executor lambda
+//                  │ that calls executeTool
+//                  │
+//                  ▼
+//   ┌──────────────────────────────┐
+//   │detectAndExecuteToolCallsLoop │
+//   └──────────────┬───────────────┘
+//                  │
+//                  │ For each tool request,
+//                  │ calls executor
+//                  │
+//                  ▼
+//   ┌──────────────────────────────┐
+//   │ executeTool                  │
+//   │ (automatic execution)        │
+//   └──────────────┬───────────────┘
+//                  │
+//                  ▼
+//   ┌──────────────────────────────┐
+//   │ tool.RunRaw()                │
+//   │ Append result to history     │
+//   └──────────────────────────────┘
+//
+func (agent *NPCAgent) DetectAndExecuteToolCalls(ctx context.Context, config Config, userMessage string) (*ToolCallsResult, error) {
+	executor := func(ctx context.Context, req *ai.ToolRequest, tool ai.Tool, history *[]*ai.Message, toolCallsResults *[]any, stopped *bool) {
+		agent.executeTool(ctx, req, tool, history, toolCallsResults)
+	}
+	return agent.detectAndExecuteToolCallsLoop(ctx, config, userMessage, executor)
+}
+
+// DetectAndExecuteToolCallsWithConfirmation detects and executes tool calls with user confirmation
+//
+// Flow:
+//   ┌──────────────────────────────┐
+//   │DetectAndExecuteToolCalls     │
+//   │WithConfirmation              │
+//   └──────────────┬───────────────┘
+//                  │
+//                  │ Passes executeToolWithConfirmation
+//                  │ as executor
+//                  │
+//                  ▼
+//   ┌──────────────────────────────┐
+//   │detectAndExecuteToolCallsLoop │
+//   └──────────────┬───────────────┘
+//                  │
+//                  │ For each tool request,
+//                  │ calls executor
+//                  │
+//                  ▼
+//   ┌──────────────────────────────┐
+//   │executeToolWithConfirmation   │
+//   └──────────────┬───────────────┘
+//                  │
+//                  │ Ask user: y/n/q?
+//                  │
+//       ┌──────────┼──────────┐
+//       │          │          │
+//       ▼          ▼          ▼
+//    ┌───┐      ┌───┐      ┌───┐
+//    │ y │      │ n │      │ q │
+//    └─┬─┘      └─┬─┘      └─┬─┘
+//      │          │          │
+//      │          │          └──► Set stopped=true
+//      │          │
+//      │          └──► Append "cancelled" to history
+//      │
+//      └──► Call executeTool()
+//
+func (agent *NPCAgent) DetectAndExecuteToolCallsWithConfirmation(ctx context.Context, config Config, userMessage string) (*ToolCallsResult, error) {
+	return agent.detectAndExecuteToolCallsLoop(ctx, config, userMessage, agent.executeToolWithConfirmation)
 }
 
 func (agent *NPCAgent) LoopCompletion(ctx context.Context, config Config) {
