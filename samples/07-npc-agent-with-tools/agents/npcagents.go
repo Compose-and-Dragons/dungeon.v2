@@ -4,8 +4,8 @@ import (
 	"bufio"
 	"context"
 	"fmt"
-	"log"
 	"npc-agent-with-tools/helpers"
+	"npc-agent-with-tools/msg"
 	"npc-agent-with-tools/rag"
 	"os"
 	"strings"
@@ -108,7 +108,9 @@ func (agent *NPCAgent) InitializeVectorStoreFromFile(ctx context.Context, config
 	memoryRetriever := rag.DefineMemoryVectorRetriever(agent.genKitInstance, &vectorStore, embedder)
 	agent.memoryRetriever = memoryRetriever
 
-	fmt.Printf("🧠 Created vector store with %d records\n", len(vectorStore.Records))
+	msg.DisplayEmbeddingsMessages(
+		fmt.Sprintf("🧠 Created vector store with %d records\n", len(vectorStore.Records)),
+	)
 
 	return nil
 }
@@ -202,6 +204,7 @@ func (agent *NPCAgent) StreamCompletionWithSimilaritySearch(ctx context.Context,
 
 }
 
+
 func (agent *NPCAgent) DetectAndExecuteToolCalls(ctx context.Context, config Config, userMessage string) (*ToolCallsResult, error) {
 
 	stopped := false
@@ -211,18 +214,16 @@ func (agent *NPCAgent) DetectAndExecuteToolCalls(ctx context.Context, config Con
 
 	history := []*ai.Message{}
 
-	fmt.Println("🛠️ Tools index", len(config.Tools), "active tools.")
-	for _, t := range config.Tools {
-		fmt.Println("   -", t.Name())
-	}
+	// Only displayed if enabled via env var ...
+	displayToolsList(config.Tools)
 
+	// IMPORTANT:
 	// To avoid repeating the first user message in the history
 	// we add it here before entering the loop and using prompt
 	history = append(history, ai.NewUserTextMessage(userMessage))
 
-
 	for !stopped {
-		fmt.Printf("\n🔄 Tool detection loop iteration - Current history length: %d\n", len(history))
+		//msg.DisplayToolMessages(fmt.Sprintf("\n🔄 Tool detection loop iteration - Current history length: %d\n", len(history)))
 
 		resp, err := genkit.Generate(ctx, agent.genKitInstance,
 			ai.WithModelName(config.ToolsModelId),
@@ -234,101 +235,100 @@ func (agent *NPCAgent) DetectAndExecuteToolCalls(ctx context.Context, config Con
 			ai.WithReturnToolRequests(true),
 		)
 		if err != nil {
-			fmt.Printf("🔴 [tools] Error: %v\n", err)
+			msg.DisplayError("🔴 [tools] Error:", err)
+			// break the loop on error
+			stopped = true
+			break
 		}
 
 		toolRequests := resp.ToolRequests()
+		// If no tool requests, we can stop the loop
 		if len(toolRequests) == 0 {
 			stopped = true
 			lastToolAssistantMessage = resp.Text()
-			fmt.Println("✅ No more tool requests, stopping loop")
+
+			msg.DisplayToolMessages("✅ No more tool requests, stopping loop")
 			break
 		}
-		fmt.Println("✋ Number of tool requests", len(toolRequests))
+		//msg.DisplayToolMessages(fmt.Sprintf("✋ Number of tool requests: %v", len(toolRequests)))
+
 		totalOfToolsCalls += len(toolRequests)
 
+		// Append the assistant message with tool requests to history
 		history = append(history, resp.Message)
-		fmt.Printf("📥 Added assistant message to history (length now: %d)\n", len(history))
 
+		// BEGIN: [TOOL CALLS] detection loop
 		for _, req := range toolRequests {
-			fmt.Println("🛠️ Tool request:", req.Name, "Ref:", req.Ref, "Input:", req.Input)
-
-			// STEP 1: First try to lookup in registered tools (for locally defined tools)
+			// STEP 1: find the tool by name
+			msg.DisplayToolMessages(fmt.Sprintf("🛠️ Tool request: %s Args: %v", req.Name, req.Input))
 			var tool ai.Tool
 			// tool = genkit.LookupTool(agent.genKitInstance, req.Name)
-			// if tool != nil {
-			// 	fmt.Println("   ✅ Found in genkit registry (local tool)")
-			// }
 
-			// STEP 2: If not found, search in config.Tools (for MCP tools)
-			//if tool == nil {
 			for _, t := range config.Tools {
 				if t.Name() == req.Name {
-					fmt.Println("   🔍 Found in config.Tools (MCP tool), attempting conversion...")
 					// Try to convert ToolRef to Tool
 					if toolImpl, ok := t.(ai.Tool); ok {
 						tool = toolImpl
-						fmt.Println("   ✅ Successfully converted to ai.Tool")
+						// ✅ Successfully converted to ai.Tool"
 						break
-					} else {
-						fmt.Println("   ❌ Failed to convert ToolRef to ai.Tool")
 					}
+					// else: ❌ Failed to convert ToolRef to ai.Tool")
 				}
 			}
-			//}
 
-			// STEP 3: If still not found, log error and continue
+			// If not found, log error and continue
 			if tool == nil {
-				fmt.Printf("🔴 tool %q not found\n", req.Name)
+				msg.DisplayToolMessages(fmt.Sprintf("🔴 tool %q not found\n", req.Name))
 				//break // [TODO]: continue?
 				continue
 			}
 
-			// STEP 4: Ask for tool execution confirmation
-			execConfirmation := func() {
+			// STEP 2: Ask for tool execution confirmation
+			execWithConfirmation := func() {
 				var response string
 				for {
 					fmt.Printf("Do you want to execute tool %q? (y/n/q): ", req.Name)
 					_, err := fmt.Scanln(&response)
 					if err != nil {
-						fmt.Println("Error reading input:", err)
+						msg.DisplayError("😡 Error reading input:", err)
 						continue
 					}
 					response = strings.ToLower(strings.TrimSpace(response))
 
 					switch response {
 					case "q":
-						fmt.Println("Exiting the program.")
+						fmt.Println("👋 Exiting the program.")
 						stopped = true
 						return
 					case "y":
 						output, err := tool.RunRaw(ctx, req.Input)
 						if err != nil {
-							log.Fatalf("tool %q execution failed: %v", tool.Name(), err)
+							msg.DisplayError(fmt.Sprintf("😡 tool %q execution failed:", tool.Name()), err)
+							continue
 						}
-						fmt.Println("🤖 Result:", output)
 
-						//toolCallsResults += fmt.Sprintf("Result: %v\n", output)
+						msg.DisplayToolMessages(fmt.Sprintf("🤖 Result: %v", output))
+
 						toolCallsResults = append(toolCallsResults, map[string]any{
 							"tool_name":   req.Name,
 							"tool_ref":    req.Ref,
 							"tool_output": output,
 						})
 
+						// Add tool response to history
 						part := ai.NewToolResponsePart(&ai.ToolResponse{
 							Name:   req.Name,
 							Ref:    req.Ref,
 							Output: output,
 						})
-						//fmt.Println("✅", output)
-						history = append(history, ai.NewMessage(ai.RoleTool, nil, part))
-						fmt.Printf("   📜 History length now: %d\n", len(history))
 
+						// Append tool response to history
+						history = append(history, ai.NewMessage(ai.RoleTool, nil, part))
 						return
 					case "n":
+
 						fmt.Println("⏩ Skipping tool execution.", req.Name, req.Ref)
 
-						//toolCallsResults += fmt.Sprintf("Result: tool %v execution cancelled by user\n", req.Name)
 						toolCallsResults = append(toolCallsResults, map[string]any{
 							"tool_name":   req.Name,
 							"tool_ref":    req.Ref,
@@ -341,9 +341,8 @@ func (agent *NPCAgent) DetectAndExecuteToolCalls(ctx context.Context, config Con
 							Ref:    req.Ref,
 							Output: map[string]any{"error": "Tool execution cancelled by user"},
 						})
-						history = append(history, ai.NewMessage(ai.RoleTool, nil, part))
-						fmt.Printf("   📜 History length now: %d\n", len(history))
 
+						history = append(history, ai.NewMessage(ai.RoleTool, nil, part))
 						return
 					default:
 						fmt.Println("Please enter 'y' or 'n'.")
@@ -353,16 +352,12 @@ func (agent *NPCAgent) DetectAndExecuteToolCalls(ctx context.Context, config Con
 				}
 
 			}
-			execConfirmation()
-
-			fmt.Println(strings.Repeat("-", 20))
-			fmt.Println("📜 Tools History now has", len(history), "messages")
-			fmt.Println(strings.Repeat("-", 20))
+			execWithConfirmation()
 		}
 
-	}
-	//fmt.Println("🎉 Final response:\n", lastToolAssistantMessage)
+	} // END: of [TOOL CALLS] detection loop
 
+	// [TOOL CALL RESULT]
 	return &ToolCallsResult{
 		TotalCalls:  totalOfToolsCalls,
 		Results:     toolCallsResults,
@@ -403,87 +398,4 @@ func (agent *NPCAgent) LoopCompletion(ctx context.Context, config Config) {
 		fmt.Println()
 
 	}
-}
-
-func generateEmbeddings(ctx context.Context, engineURL string, embeddingModelId string, chunks []string) (ai.Embedder, rag.MemoryVectorStore, error) {
-	store := rag.MemoryVectorStore{
-		Records: make(map[string]rag.VectorRecord),
-	}
-
-	oaiPlugin := &openai.OpenAI{
-		APIKey: "tada",
-		Opts: []option.RequestOption{
-			option.WithBaseURL(engineURL),
-		},
-	}
-	g := genkit.Init(ctx, genkit.WithPlugins(oaiPlugin))
-	embedder := oaiPlugin.DefineEmbedder(embeddingModelId, nil)
-
-	for _, chunk := range chunks {
-		resp, err := genkit.Embed(ctx, g,
-			ai.WithEmbedder(embedder),
-			ai.WithTextDocs(chunk),
-		)
-		if err != nil {
-			fmt.Println("😡 Error generating embedding:", err)
-			return nil, rag.MemoryVectorStore{}, err
-		}
-		for i, emb := range resp.Embeddings {
-			// Store the embedding in the vector store
-			record, errSave := store.Save(rag.VectorRecord{
-				Prompt:    chunk,
-				Embedding: emb.Embedding,
-			})
-			if errSave != nil {
-				fmt.Println("😡 Error saving vector record:", errSave)
-				return nil, rag.MemoryVectorStore{}, errSave
-			}
-			fmt.Println("💾", i, "Saved record:", record.Prompt, record.Id)
-
-		}
-	}
-	return embedder, store, nil
-	// TODO: save to a JSON file and retrive from there
-}
-
-func retrieveSimilarDocuments(ctx context.Context, query string, retriever ai.Retriever, similarityThreshold float64, similarityMaxResults int) (string, error) {
-	// Create a query document from the user question
-	queryDoc := ai.DocumentFromText(query, nil)
-
-	//similarityThreshold := helpers.StringToFloat(helpers.GetEnvOrDefault("SIMILARITY_THRESHOLD", "0.5"))
-	//similarityMaxResults := helpers.StringToInt(helpers.GetEnvOrDefault("SIMILARITY_MAX_RESULTS", "3"))
-
-	// Create a retriever request with custom options
-	request := &ai.RetrieverRequest{
-		Query: queryDoc,
-		Options: rag.MemoryVectorRetrieverOptions{
-			Limit:      similarityThreshold,  // Lower similarity threshold to get more results
-			MaxResults: similarityMaxResults, // Return top N results
-		},
-	}
-
-	// Use the memory vector retriever to find similar documents
-	retrieveResponse, err := retriever.Retrieve(ctx, request)
-	if err != nil {
-		return "", err
-	}
-
-	similarDocuments := ""
-	// TODO: make a log helper
-	fmt.Println("--------------------------------------------------")
-	fmt.Printf("\n📘 Found %d similar documents:\n", len(retrieveResponse.Documents))
-	for i, doc := range retrieveResponse.Documents {
-		similarity := doc.Metadata["cosine_similarity"].(float64)
-		id := doc.Metadata["id"].(string)
-		content := doc.Content[0].Text
-
-		fmt.Printf("%d. ID: %s, Similarity: %.4f\n", i+1, id, similarity)
-		fmt.Printf("   Content: %s\n\n", content)
-
-		similarDocuments += content
-	}
-
-	fmt.Println("--------------------------------------------------")
-	fmt.Println()
-	return similarDocuments, nil
 }
