@@ -30,3 +30,12 @@ func StringToFloat(str string) float64 {
 	}
 	return num
 }
+
+func StringToBool(str string) bool {
+	val, err := strconv.ParseBool(str)
+	if err != nil {
+		fmt.Println("Cannot convert to bool:", err)
+		return false
+	}
+	return val
+}
