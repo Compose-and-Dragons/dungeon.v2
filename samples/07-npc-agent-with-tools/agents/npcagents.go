@@ -4,8 +4,9 @@ import (
 	"bufio"
 	"context"
 	"fmt"
-	"npc-agent/helpers"
-	"npc-agent/rag"
+	"log"
+	"npc-agent-with-tools/helpers"
+	"npc-agent-with-tools/rag"
 	"os"
 	"strings"
 
@@ -26,6 +27,16 @@ type Config struct {
 
 	ChatModelId       string
 	EmbeddingsModelId string
+	ToolsModelId      string
+
+	Tools []ai.ToolRef
+}
+
+// ToolCallsResult holds the result of tool calls detection and execution
+type ToolCallsResult struct {
+	TotalCalls  int
+	Results     []any
+	LastMessage string
 }
 
 // IMPORTANT: the conversation history is automatically managed
@@ -37,12 +48,13 @@ type NPCAgent struct {
 
 	messages []*ai.Message
 
-	systemInstructions string
+	systemInstructions      string
+	toolsSystemInstructions string
 	//backgroundContext  string
 
-	memoryVectorStore     rag.MemoryVectorStore
-	embedder        ai.Embedder
-	memoryRetriever ai.Retriever
+	memoryVectorStore rag.MemoryVectorStore
+	embedder          ai.Embedder
+	memoryRetriever   ai.Retriever
 }
 
 func (agent *NPCAgent) Initialize(ctx context.Context, config Config, name string) {
@@ -181,7 +193,6 @@ func (agent *NPCAgent) StreamCompletion(ctx context.Context, config Config, user
 	return fullResponse.Text(), nil
 }
 
-
 func (agent *NPCAgent) StreamCompletionWithSimilaritySearch(ctx context.Context, config Config, userMessage string, callback ai.ModelStreamCallback) (string, error) {
 
 	// Retrieve relevant context from the vector store
@@ -189,6 +200,174 @@ func (agent *NPCAgent) StreamCompletionWithSimilaritySearch(ctx context.Context,
 
 	return agent.StreamCompletion(ctx, config, userMessage, callback)
 
+}
+
+func (agent *NPCAgent) DetectAndExecuteToolCalls(ctx context.Context, config Config, userMessage string) (*ToolCallsResult, error) {
+
+	stopped := false
+	lastToolAssistantMessage := ""
+	totalOfToolsCalls := 0
+	toolCallsResults := []any{}
+
+	history := []*ai.Message{}
+
+	fmt.Println("🛠️ Tools index", len(config.Tools), "active tools.")
+	for _, t := range config.Tools {
+		fmt.Println("   -", t.Name())
+	}
+
+	// To avoid repeating the first user message in the history
+	// we add it here before entering the loop and using prompt
+	history = append(history, ai.NewUserTextMessage(userMessage))
+
+
+	for !stopped {
+		fmt.Printf("\n🔄 Tool detection loop iteration - Current history length: %d\n", len(history))
+
+		resp, err := genkit.Generate(ctx, agent.genKitInstance,
+			ai.WithModelName(config.ToolsModelId),
+			ai.WithSystem(agent.toolsSystemInstructions),
+			ai.WithMessages(history...),
+			//ai.WithPrompt(userMessage),
+			ai.WithTools(config.Tools...),
+			ai.WithToolChoice(ai.ToolChoiceAuto),
+			ai.WithReturnToolRequests(true),
+		)
+		if err != nil {
+			fmt.Printf("🔴 [tools] Error: %v\n", err)
+		}
+
+		toolRequests := resp.ToolRequests()
+		if len(toolRequests) == 0 {
+			stopped = true
+			lastToolAssistantMessage = resp.Text()
+			fmt.Println("✅ No more tool requests, stopping loop")
+			break
+		}
+		fmt.Println("✋ Number of tool requests", len(toolRequests))
+		totalOfToolsCalls += len(toolRequests)
+
+		history = append(history, resp.Message)
+		fmt.Printf("📥 Added assistant message to history (length now: %d)\n", len(history))
+
+		for _, req := range toolRequests {
+			fmt.Println("🛠️ Tool request:", req.Name, "Ref:", req.Ref, "Input:", req.Input)
+
+			// STEP 1: First try to lookup in registered tools (for locally defined tools)
+			var tool ai.Tool
+			// tool = genkit.LookupTool(agent.genKitInstance, req.Name)
+			// if tool != nil {
+			// 	fmt.Println("   ✅ Found in genkit registry (local tool)")
+			// }
+
+			// STEP 2: If not found, search in config.Tools (for MCP tools)
+			//if tool == nil {
+			for _, t := range config.Tools {
+				if t.Name() == req.Name {
+					fmt.Println("   🔍 Found in config.Tools (MCP tool), attempting conversion...")
+					// Try to convert ToolRef to Tool
+					if toolImpl, ok := t.(ai.Tool); ok {
+						tool = toolImpl
+						fmt.Println("   ✅ Successfully converted to ai.Tool")
+						break
+					} else {
+						fmt.Println("   ❌ Failed to convert ToolRef to ai.Tool")
+					}
+				}
+			}
+			//}
+
+			// STEP 3: If still not found, log error and continue
+			if tool == nil {
+				fmt.Printf("🔴 tool %q not found\n", req.Name)
+				//break // [TODO]: continue?
+				continue
+			}
+
+			// STEP 4: Ask for tool execution confirmation
+			execConfirmation := func() {
+				var response string
+				for {
+					fmt.Printf("Do you want to execute tool %q? (y/n/q): ", req.Name)
+					_, err := fmt.Scanln(&response)
+					if err != nil {
+						fmt.Println("Error reading input:", err)
+						continue
+					}
+					response = strings.ToLower(strings.TrimSpace(response))
+
+					switch response {
+					case "q":
+						fmt.Println("Exiting the program.")
+						stopped = true
+						return
+					case "y":
+						output, err := tool.RunRaw(ctx, req.Input)
+						if err != nil {
+							log.Fatalf("tool %q execution failed: %v", tool.Name(), err)
+						}
+						fmt.Println("🤖 Result:", output)
+
+						//toolCallsResults += fmt.Sprintf("Result: %v\n", output)
+						toolCallsResults = append(toolCallsResults, map[string]any{
+							"tool_name":   req.Name,
+							"tool_ref":    req.Ref,
+							"tool_output": output,
+						})
+
+						part := ai.NewToolResponsePart(&ai.ToolResponse{
+							Name:   req.Name,
+							Ref:    req.Ref,
+							Output: output,
+						})
+						//fmt.Println("✅", output)
+						history = append(history, ai.NewMessage(ai.RoleTool, nil, part))
+						fmt.Printf("   📜 History length now: %d\n", len(history))
+
+						return
+					case "n":
+						fmt.Println("⏩ Skipping tool execution.", req.Name, req.Ref)
+
+						//toolCallsResults += fmt.Sprintf("Result: tool %v execution cancelled by user\n", req.Name)
+						toolCallsResults = append(toolCallsResults, map[string]any{
+							"tool_name":   req.Name,
+							"tool_ref":    req.Ref,
+							"tool_output": "Tool execution cancelled by user",
+						})
+
+						// Add tool response indicating the tool was not executed
+						part := ai.NewToolResponsePart(&ai.ToolResponse{
+							Name:   req.Name,
+							Ref:    req.Ref,
+							Output: map[string]any{"error": "Tool execution cancelled by user"},
+						})
+						history = append(history, ai.NewMessage(ai.RoleTool, nil, part))
+						fmt.Printf("   📜 History length now: %d\n", len(history))
+
+						return
+					default:
+						fmt.Println("Please enter 'y' or 'n'.")
+						continue
+					}
+
+				}
+
+			}
+			execConfirmation()
+
+			fmt.Println(strings.Repeat("-", 20))
+			fmt.Println("📜 Tools History now has", len(history), "messages")
+			fmt.Println(strings.Repeat("-", 20))
+		}
+
+	}
+	//fmt.Println("🎉 Final response:\n", lastToolAssistantMessage)
+
+	return &ToolCallsResult{
+		TotalCalls:  totalOfToolsCalls,
+		Results:     toolCallsResults,
+		LastMessage: lastToolAssistantMessage,
+	}, nil
 }
 
 func (agent *NPCAgent) LoopCompletion(ctx context.Context, config Config) {
