@@ -21,12 +21,6 @@ type Config struct {
 	SimilaritySearchLimit      float64
 	SimilaritySearchMaxResults int
 
-	/*
-		similarityThreshold := helpers.StringToFloat(helpers.GetEnvOrDefault("SIMILARITY_THRESHOLD", "0.5"))
-		similarityMaxResults := helpers.StringToInt(helpers.GetEnvOrDefault("SIMILARITY_MAX_RESULTS", "3"))
-
-	*/
-
 	Temperature float64
 	TopP        float64
 
@@ -34,6 +28,8 @@ type Config struct {
 	EmbeddingsModelId string
 }
 
+// IMPORTANT: the conversation history is automatically managed
+// TODO: add methods to clear history, export history, import history, etc.
 type NPCAgent struct {
 	Name string
 
@@ -44,7 +40,7 @@ type NPCAgent struct {
 	systemInstructions string
 	//backgroundContext  string
 
-	vectorStore     rag.MemoryVectorStore
+	memoryVectorStore     rag.MemoryVectorStore
 	embedder        ai.Embedder
 	memoryRetriever ai.Retriever
 }
@@ -91,7 +87,7 @@ func (agent *NPCAgent) InitializeVectorStoreFromFile(ctx context.Context, config
 		return err
 	}
 	agent.embedder = embedder
-	agent.vectorStore = vectorStore
+	agent.memoryVectorStore = vectorStore
 
 	memoryRetriever := rag.DefineMemoryVectorRetriever(agent.genKitInstance, &vectorStore, embedder)
 	agent.memoryRetriever = memoryRetriever
@@ -101,15 +97,56 @@ func (agent *NPCAgent) InitializeVectorStoreFromFile(ctx context.Context, config
 	return nil
 }
 
-func (agent *NPCAgent) StreamCompletion(ctx context.Context, config Config, userMessage string, callback ai.ModelStreamCallback) (string, error) {
+func (agent *NPCAgent) Completion(ctx context.Context, config Config, userMessage string) (string, error) {
 
+	fullResponse, err := genkit.Generate(ctx, agent.genKitInstance,
+		ai.WithModelName(config.ChatModelId),
+		ai.WithSystem(agent.systemInstructions),
+		// WithMessages sets the messages.
+		// These messages will be sandwiched between the system and user prompts.
+		ai.WithMessages(
+			agent.messages...,
+		),
+		ai.WithPrompt(userMessage),
+		ai.WithConfig(map[string]any{
+			"temperature": config.Temperature,
+			"top_p":       config.TopP,
+		}),
+	)
+
+	if err != nil {
+		return "", err
+	}
+
+	// Append user message to history
+	agent.messages = append(agent.messages, ai.NewUserTextMessage(strings.TrimSpace(userMessage)))
+	// Append assistant response to history
+	agent.messages = append(agent.messages, ai.NewModelTextMessage(strings.TrimSpace(fullResponse.Text())))
+
+	return fullResponse.Text(), nil
+}
+
+func (agent *NPCAgent) SimilaritySearch(ctx context.Context, config Config, userMessage string) (string, error) {
 	// Retrieve relevant context from the vector store
 	similarDocuments, err := retrieveSimilarDocuments(ctx, userMessage, agent.memoryRetriever, config.SimilaritySearchLimit, config.SimilaritySearchMaxResults)
 	if err != nil {
 		return "", err
 	}
-
 	agent.messages = append(agent.messages, ai.NewSystemTextMessage(fmt.Sprintf("Relevant context to help you answer the next question:\n%s", similarDocuments)))
+
+	return similarDocuments, nil
+}
+
+func (agent *NPCAgent) CompletionWithSimilaritySearch(ctx context.Context, config Config, userMessage string) (string, error) {
+
+	// Retrieve relevant context from the vector store
+	agent.SimilaritySearch(ctx, config, userMessage)
+
+	return agent.Completion(ctx, config, userMessage)
+
+}
+
+func (agent *NPCAgent) StreamCompletion(ctx context.Context, config Config, userMessage string, callback ai.ModelStreamCallback) (string, error) {
 
 	fullResponse, err := genkit.Generate(ctx, agent.genKitInstance,
 		ai.WithModelName(config.ChatModelId),
@@ -140,6 +177,16 @@ func (agent *NPCAgent) StreamCompletion(ctx context.Context, config Config, user
 	return fullResponse.Text(), nil
 }
 
+
+func (agent *NPCAgent) StreamCompletionWithSimilaritySearch(ctx context.Context, config Config, userMessage string, callback ai.ModelStreamCallback) (string, error) {
+
+	// Retrieve relevant context from the vector store
+	agent.SimilaritySearch(ctx, config, userMessage)
+
+	return agent.StreamCompletion(ctx, config, userMessage, callback)
+
+}
+
 func (agent *NPCAgent) LoopCompletion(ctx context.Context, config Config) {
 	for {
 		reader := bufio.NewReader(os.Stdin)
@@ -164,7 +211,7 @@ func (agent *NPCAgent) LoopCompletion(ctx context.Context, config Config) {
 			continue
 		}
 
-		agent.StreamCompletion(ctx, config, userMessage, func(ctx context.Context, chunk *ai.ModelResponseChunk) error {
+		agent.StreamCompletionWithSimilaritySearch(ctx, config, userMessage, func(ctx context.Context, chunk *ai.ModelResponseChunk) error {
 			fmt.Print(chunk.Text())
 			return nil
 		})
