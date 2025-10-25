@@ -1,0 +1,122 @@
+# docker compose -f compose-dungeon.yml up --build 
+x-common-variables: &common-variables
+  # ---------------------------------------------------------
+  # Non-Player Characters (NPC) settings
+  # ---------------------------------------------------------
+  # roomID := fmt.Sprintf("room_%d_%d", newX, newY)
+
+  # ---------------------------------------------------------
+  # Merchant settings
+  # ---------------------------------------------------------
+  MERCHANT_ROOM: room_1_1
+  MERCHANT_NAME: Galdor
+  MERCHANT_RACE: Dwarf
+  
+  # ---------------------------------------------------------
+  # Guard settings
+  # ---------------------------------------------------------
+  GUARD_ROOM: room_0_2
+  GUARD_NAME: Thrain
+  GUARD_RACE: Elf
+
+  # ---------------------------------------------------------
+  # Sorcerer settings
+  # ---------------------------------------------------------
+  SORCERER_ROOM: room_2_0
+  SORCERER_NAME: Elara
+  SORCERER_RACE: Human  
+  
+  # ---------------------------------------------------------
+  # Healer settings
+  # ---------------------------------------------------------
+  HEALER_ROOM: room_2_1
+  HEALER_NAME: Liora
+  HEALER_RACE: Half-Elf
+
+services:
+
+  mcp-dungeon:
+    build:
+      context: .
+      dockerfile: ./dungeon-crawler-mcp-server/Dockerfile
+    ports:
+      - 9090:6060
+    environment:
+      <<: *common-variables
+      MCP_HTTP_PORT: 6060
+
+      # ---------------------------------------------------------
+      # Dungeon settings
+      # ---------------------------------------------------------
+      DUNGEON_NAME: The square dungeon of Compose-and-Dragons
+      DUNGEON_DESCRIPTION: A sprawling underground maze filled with monsters, traps, and treasure.
+      DUNGEON_WIDTH: 4
+      DUNGEON_HEIGHT: 4
+      DUNGEON_ENTRANCE_X: 0
+      DUNGEON_ENTRANCE_Y: 0
+      DUNGEON_EXIT_X: 3
+      DUNGEON_EXIT_Y: 3
+
+      # ---------------------------------------------------------
+      # Dungeon agent settings
+      # ---------------------------------------------------------
+      # ✋ This agent generates rooms and monsters using a language model
+      DUNGEON_MODEL_TEMPERATURE: 0.7
+
+      DUNGEON_AGENT_NAME: dungeon-agent
+
+      # ---------------------------------------------------------
+      # Instruction for the room generation
+      # ---------------------------------------------------------
+      DUNGEON_AGENT_ROOM_SYSTEM_INSTRUCTION: |
+        # IDENTITY and PURPOSE
+        You are an expert room generator for games like D&D 5th edition. 
+        You have freedom to be creative to get the best possible output.
+
+        # GENERATION INSTRUCTIONS
+        When generating rooms, you must follow these rules:
+        Your job is to generate a name and description of a room in a fantasy setting.
+        The output is the name and description of the room.
+        Speak only in English, avoid Chinese ideogram.
+        Ensure the name and the description are fantasy-themed.
+
+      # ---------------------------------------------------------
+      # Instruction for the monster generation
+      # ---------------------------------------------------------
+      DUNGEON_AGENT_MONSTER_SYSTEM_INSTRUCTION: |
+        # IDENTITY and PURPOSE
+        You are an expert monster generator for games like D&D 5th edition. 
+        You have freedom to be creative to get the best possible output.
+
+        # GENERATION INSTRUCTIONS
+        When generating monsters, you must follow these rules:
+        Your job is to generate a name and description of a monster in a fantasy setting.
+        The output is the name and description of the monster.
+        Speak only in English, avoid Chinese ideogram.
+        Ensure the name and the description are fantasy-themed.
+
+
+      # if the dungeon is too empty, increase these probabilities
+      # if the dungeon is small, increase these probabilities
+      #ITEM_PROBABILITY: 0.20
+      MAGIC_POTION_PROBABILITY: 0.5
+      GOLD_COINS_PROBABILITY: 0.5
+      #MONSTER_PROBABILITY: 0.25
+      MONSTER_PROBABILITY: 0.5
+
+      # ---------------------------------------------------------
+      # Player settings
+      # ---------------------------------------------------------
+      PLAYER_INITIAL_HEALTH: 100
+      PLAYER_INITIAL_STRENGTH: 10
+      PLAYER_INITIAL_EXPERIENCE: 0
+      PLAYER_INITIAL_GOLD_COINS: 0
+
+    models:
+      dungeon-model:
+        endpoint_var: MODEL_RUNNER_BASE_URL
+        model_var: DUNGEON_MODEL
+      
+models:
+  dungeon-model:
+    model: ai/qwen2.5:1.5B-F16   

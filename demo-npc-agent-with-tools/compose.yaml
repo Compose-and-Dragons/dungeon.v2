@@ -1,0 +1,144 @@
+services:
+  sorcerer-mcp-agent:
+    tty: true
+    stdin_open: true
+    build:
+      context: ..
+      dockerfile_inline: |
+        FROM golang:1.25.2-alpine
+        WORKDIR /app
+        # Copy root go.mod and packages
+        COPY go.mod go.sum* ./
+        COPY compose-dragons/agents/ ./compose-dragons/agents/
+        COPY compose-dragons/helpers/ ./compose-dragons/helpers/
+        COPY compose-dragons/tools/ ./compose-dragons/tools/
+        COPY compose-dragons/msg/ ./compose-dragons/msg/
+        COPY compose-dragons/rag/ ./compose-dragons/rag/
+        # Copy demo-agent
+        COPY demo-npc-agent-with-tools/ ./demo-agent/
+        WORKDIR /app/demo-agent
+        RUN go mod tidy
+        RUN go build -o sorcerer-agent main.go
+        #ENTRYPOINT ["./sorcerer-agent"]
+    environment:
+
+      SORCERER_NAME: Elara
+
+      SORCERER_MODEL_TEMPERATURE: 0.0
+      SORCERER_MODEL_TOP_P: 0.9
+
+      MCP_SERVER_BASE_URL: http://mcp-gateway:9011
+
+    models:
+      chat-model:
+        endpoint_var: MODEL_RUNNER_BASE_URL
+        model_var: CHAT_MODEL
+
+      tools-model:
+        endpoint_var: MODEL_RUNNER_BASE_URL
+        model_var: TOOLS_MODEL
+
+    depends_on:
+      mcp-gateway:
+        condition: service_started
+
+  mcp-gateway:
+    # mcp-gateway secures your MCP servers
+    image: docker/mcp-gateway:latest
+    ports:
+      - 9011:9011
+    use_api_socket: true
+    command:
+      - --port=9011
+      - --transport=streaming
+      - --verbose
+      - --catalog=/mcp/catalog.yaml
+      - --servers=mcp-fancy-names,mcp-dnd,mcp-hello-world
+
+    configs:
+      - source: catalog.yaml
+        target:
+          /mcp/catalog.yaml
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      mcp-fancy-names:
+        condition: service_healthy
+      mcp-hello-world:
+        condition: service_healthy
+      mcp-dnd:
+        condition: service_healthy
+
+
+  mcp-fancy-names:
+    build:
+      context: mcp-servers/fancy-names
+      dockerfile: Dockerfile    
+    environment:
+      MCP_HTTP_PORT: 6060
+    
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:6060/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  mcp-hello-world:
+    build:
+      context: mcp-servers/hello-world
+      dockerfile: Dockerfile
+    environment:
+      MCP_HTTP_PORT: 6060
+
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:6060/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  mcp-dnd:
+    build:
+      context: mcp-servers/dnd
+      dockerfile: Dockerfile
+    environment:
+      MCP_HTTP_PORT: 6060
+
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:6060/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+configs:
+  catalog.yaml:
+    content: |
+      registry:
+
+        mcp-fancy-names:
+          remote:
+            url: "http://mcp-fancy-names:6060/mcp"
+            transport_type: http
+
+        mcp-hello-world:
+          remote:
+            url: "http://mcp-hello-world:6060/mcp"
+            transport_type: http
+
+        mcp-dnd:
+          remote:
+            url: "http://mcp-dnd:6060/mcp"
+            transport_type: http
+
+
+
+
+models:
+  chat-model:
+    model: ai/qwen2.5:1.5B-F16
+
+  tools-model:
+    model: hf.co/menlo/jan-nano-gguf:q4_k_m
+    #model: hf.co/menlo/jan-nano-gguf:q8_0

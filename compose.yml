@@ -1,0 +1,376 @@
+x-common-variables: &common-variables
+  # ---------------------------------------------------------
+  # Non-Player Characters (NPC) settings
+  # ---------------------------------------------------------
+  # roomID := fmt.Sprintf("room_%d_%d", newX, newY)
+
+  # ---------------------------------------------------------
+  # Merchant settings
+  # ---------------------------------------------------------
+  MERCHANT_ROOM: room_1_1
+  # Merchant name and race
+  MERCHANT_NAME: Galdor
+  MERCHANT_RACE: Dwarf
+  
+  MERCHANT_MODEL_TEMPERATURE: 0.7
+  MERCHANT_MODEL_TOP_P: 0.9
+  MERCHANT_SYSTEM_INSTRUCTIONS_PATH: ./data/merchant_system_instructions.md
+  MERCHANT_CONTEXT_PATH: ./data/merchant_background_and_personality.md
+
+  # ---------------------------------------------------------
+  # Guard settings
+  # ---------------------------------------------------------
+  GUARD_ROOM: room_0_2
+  # provisory guard name and race
+  GUARD_NAME: Thrain
+  GUARD_RACE: Elf
+  
+  GUARD_MODEL_TEMPERATURE: 0.7
+  GUARD_MODEL_TOP_P: 0.9
+  GUARD_SYSTEM_INSTRUCTIONS_PATH: ./data/guard_system_instructions.md
+  GUARD_CONTEXT_PATH: ./data/guard_background_and_personality.md
+
+  # ---------------------------------------------------------
+  # Sorcerer settings
+  # ---------------------------------------------------------
+  SORCERER_ROOM: room_2_0
+  # provisory sorcerer name and race
+  SORCERER_NAME: Elara
+  SORCERER_RACE: Human  
+  
+  SORCERER_MODEL_TEMPERATURE: 0.7
+  SORCERER_MODEL_TOP_P: 0.9
+  SORCERER_SYSTEM_INSTRUCTIONS_PATH: ./data/sorcerer_system_instructions.md
+  SORCERER_CONTEXT_PATH: ./data/sorcerer_background_and_personality.md
+  
+  # ---------------------------------------------------------
+  # Healer settings
+  # ---------------------------------------------------------
+  HEALER_ROOM: room_2_1
+  # provisory healer name and race
+  HEALER_NAME: Liora
+  HEALER_RACE: Half-Elf
+
+  HEALER_MODEL_TEMPERATURE: 0.7
+  HEALER_MODEL_TOP_P: 0.9
+  HEALER_SYSTEM_INSTRUCTIONS_PATH: ./data/healer_system_instructions.md
+  HEALER_CONTEXT_PATH: ./data/healer_background_and_personality.md
+  
+services:
+  # ---------------------------------------------------------
+  # Usage:
+  # docker compose up --build -d
+  # docker compose logs -f mcp-dungeon
+  # ---------------------------------------------------------
+
+  mcp-gateway:
+    # mcp-gateway secures your MCP servers
+    image: docker/mcp-gateway:v1
+    ports:
+      - 9011:9011
+    use_api_socket: true
+    command:
+      - --port=9011
+      - --transport=streaming
+      - --verbose
+      - --catalog=/mcp/catalog.yaml
+      - --servers=mcp-dungeon,mcp-toc-toc
+
+    configs:
+      - source: catalog.yaml
+        target:
+          /mcp/catalog.yaml
+
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+    depends_on:
+      mcp-dungeon:
+        condition: service_healthy
+  
+
+  mcp-toc-toc:
+    build:
+      context: ./dungeon-toc-toc-mcp-server
+      dockerfile: Dockerfile
+    environment:
+      MCP_HTTP_PORT: 9090
+
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9090/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  mcp-dungeon:
+    build:
+      context: .
+      dockerfile: ./dungeon-crawler-mcp-server/Dockerfile
+    environment:
+      <<: *common-variables
+      MCP_HTTP_PORT: 6060
+      MCP_SERVER_BASE_URL: http://mcp-gateway:9011
+
+      # ---------------------------------------------------------
+      # Dungeon settings
+      # ---------------------------------------------------------
+      DUNGEON_NAME: The square dungeon of Compose-and-Dragons
+      DUNGEON_DESCRIPTION: A sprawling underground maze filled with monsters, traps, and treasure.
+      DUNGEON_WIDTH: 4
+      DUNGEON_HEIGHT: 4
+      DUNGEON_ENTRANCE_X: 0
+      DUNGEON_ENTRANCE_Y: 0
+      DUNGEON_EXIT_X: 3
+      DUNGEON_EXIT_Y: 3
+
+      # ---------------------------------------------------------
+      # Dungeon agent settings
+      # ---------------------------------------------------------
+      # ✋ This agent generates rooms and monsters using a language model
+      DUNGEON_MODEL_TEMPERATURE: 0.7
+
+      DUNGEON_AGENT_NAME: dungeon-agent
+
+      # ---------------------------------------------------------
+      # Instruction for the room generation
+      # ---------------------------------------------------------
+      DUNGEON_AGENT_ROOM_SYSTEM_INSTRUCTION: |
+        # IDENTITY and PURPOSE
+        You are an expert room generator for games like D&D 5th edition. 
+        You have freedom to be creative to get the best possible output.
+
+        # GENERATION INSTRUCTIONS
+        When generating rooms, you must follow these rules:
+        Your job is to generate a name and description of a room in a fantasy setting.
+        The output is the name and description of the room.
+        Speak only in English, avoid Chinese ideogram.
+        Ensure the name and the description are fantasy-themed.
+
+      # ---------------------------------------------------------
+      # Instruction for the monster generation
+      # ---------------------------------------------------------
+      DUNGEON_AGENT_MONSTER_SYSTEM_INSTRUCTION: |
+        # IDENTITY and PURPOSE
+        You are an expert monster generator for games like D&D 5th edition. 
+        You have freedom to be creative to get the best possible output.
+
+        # GENERATION INSTRUCTIONS
+        When generating monsters, you must follow these rules:
+        Your job is to generate a name and description of a monster in a fantasy setting.
+        The output is the name and description of the monster.
+        Speak only in English, avoid Chinese ideogram.
+        Ensure the name and the description are fantasy-themed.
+
+
+      # if the dungeon is too empty, increase these probabilities
+      # if the dungeon is small, increase these probabilities
+      #ITEM_PROBABILITY: 0.20
+      MAGIC_POTION_PROBABILITY: 0.5
+      GOLD_COINS_PROBABILITY: 0.5
+      #MONSTER_PROBABILITY: 0.25
+      MONSTER_PROBABILITY: 0.5
+
+      # ---------------------------------------------------------
+      # Player settings
+      # ---------------------------------------------------------
+      PLAYER_INITIAL_HEALTH: 100
+      PLAYER_INITIAL_STRENGTH: 10
+      PLAYER_INITIAL_EXPERIENCE: 0
+      PLAYER_INITIAL_GOLD_COINS: 0
+
+    models:
+      dungeon-model:
+        endpoint_var: MODEL_RUNNER_BASE_URL
+        model_var: DUNGEON_MODEL
+      
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:6060/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # ---------------------------------------------------------
+  # Usage:
+  # docker attach $(docker compose ps -q dungeon-master)
+  # ---------------------------------------------------------
+  dungeon-master:
+    build:
+      context: .
+      dockerfile: dungeon-master/Dockerfile
+
+    tty: true          # Enable TTY
+    stdin_open: true   # Keep stdin open
+    
+    environment:
+      <<: *common-variables
+
+      LOG_TOOL_MESSAGES: "false"
+
+      MCP_SERVER_BASE_URL: http://mcp-gateway:9011/mcp
+      TERM: xterm-256color
+      # ---------------------------------------------------------
+      # Dungeon Master settings
+      # ---------------------------------------------------------
+      #DUNGEON_MASTER_MODEL: hf.co/menlo/jan-nano-gguf:q4_k_m
+      DUNGEON_MASTER_NAME: Zephyr
+      DUNGEON_MASTER_SYSTEM_INSTRUCTIONS: |
+        You are a friendly and helpful Dungeon Master for a Dungeons & Dragons game.
+        You will guide the player through a fantasy adventure, describing scenes, challenges, and characters.
+        You will use tools to manage the game state, such as creating a player, starting a quest, and rolling dice.
+        You will use a conversational and immersive style, making the player feel like they are part of the adventure.
+        You will avoid breaking character and stay in the role of the Dungeon Master at all times.
+        You will end each response with a question or prompt to encourage the player to take action.
+        Use all the provided data to make the adventure, the rooms description... engaging and coherent.
+        The response format is done in markdown, well structured with titles, subtitles, bullet points...
+
+      #DUNGEON_MASTER_MODEL_TEMPERATURE: 0.7 # Theoretically 0.0 
+      DUNGEON_MASTER_MODEL_TEMPERATURE: 0.0 
+      DUNGEON_MASTER_MODEL_TOP_P: 0.9
+
+
+      # ---------------------------------------------------------
+      # Similarity search settings
+      # ---------------------------------------------------------
+      SIMILARITY_LIMIT: 0.5
+      SIMILARITY_MAX_RESULTS: 2
+      VECTOR_STORES_PATH: ./data
+
+
+      # ---------------------------------------------------------
+      # End of level Boss settings
+      # ---------------------------------------------------------
+      BOSS_REMOTE_AGENT_URL: http://dungeon-end-of-level-boss:8080
+      
+      BOSS_NAME: Shesepankh
+      BOSS_RACE: Sphinx
+
+    volumes:
+      - ./dungeon-master/data:/app/data
+
+    models:
+      dungeon-master-model:
+        endpoint_var: MODEL_RUNNER_BASE_URL
+        model_var: DUNGEON_MASTER_MODEL
+
+      non-player-character-model:
+        endpoint_var: MODEL_RUNNER_BASE_URL
+        model_var: NON_PLAYER_CHARACTER_MODEL
+
+      guard-model:
+        endpoint_var: MODEL_RUNNER_BASE_URL
+        model_var: GUARD_MODEL
+
+      sorcerer_model:
+        endpoint_var: MODEL_RUNNER_BASE_URL
+        model_var: SORCERER_MODEL
+
+      merchant-model:
+        endpoint_var: MODEL_RUNNER_BASE_URL
+        model_var: MERCHANT_MODEL
+
+      healer-model:
+        endpoint_var: MODEL_RUNNER_BASE_URL
+        model_var: HEALER_MODEL
+
+      embedding-model:
+        endpoint_var: MODEL_RUNNER_BASE_URL
+        model_var: EMBEDDING_MODEL
+
+    depends_on:
+      mcp-gateway:
+        condition: service_started
+      # dungeon-end-of-level-boss:
+      #   condition: service_started
+
+  # dungeon-end-of-level-boss:
+  #   build:
+  #     context: dungeon-end-of-level-boss
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - 8888:8080 # Map port 8080 to host port 8888
+  #   environment:
+  #     MCP_SERVER_BASE_URL: http://mcp-gateway:9011/mcp
+  #     # ---------------------------------------------------------
+  #     # Boss settings
+  #     # ---------------------------------------------------------
+  #     BOSS_REMOTE_AGENT_HTTP_PORT: 8080
+  #     BOSS_MODEL_TEMPERATURE: 0.7
+  #     #BOSS_NAME: Abou el-Hol
+  #     # Le Sphinx de Gizeh
+  #     BOSS_NAME: Shesepankh
+  #     BOSS_RACE: Sphinx
+  #     BOSS_DESCRIPTION: An ancient and wise Sphinx who guards the exit of the dungeon. Known for posing riddles to those who seek passage.
+  #     BOSS_SYSTEM_INSTRUCTIONS_PATH: ./data/boss_system_instructions.md
+  #     BOSS_CONTEXT_PATH: ./data/boss_background_and_personality.md
+
+  #     # ---------------------------------------------------------
+  #     # Similarity search settings
+  #     # ---------------------------------------------------------
+  #     SIMILARITY_LIMIT: 0.5
+  #     SIMILARITY_MAX_RESULTS: 2
+  #     VECTOR_STORES_PATH: ./data
+
+  #   volumes:
+  #     - ./dungeon-end-of-level-boss/data:/app/data
+
+  #   models:
+  #     boss-model:
+  #       endpoint_var: MODEL_RUNNER_BASE_URL
+  #       model_var: BOSS_MODEL
+
+  #     embedding-model:
+  #       endpoint_var: MODEL_RUNNER_BASE_URL
+  #       model_var: EMBEDDING_MODEL
+
+models:
+  dungeon-model:
+    model: ai/qwen2.5:1.5B-F16   
+
+  dungeon-master-model:
+    model: hf.co/menlo/jan-nano-gguf:q4_k_m
+    #model: hf.co/menlo/lucy-gguf:q8_0
+    #model: hf.co/devquasar/quotientai.limbic-tool-use-0.5b-32k-gguf:q4_k_m                                
+    
+  embedding-model:
+    #model: ai/mxbai-embed-large:latest
+    model: ai/granite-embedding-multilingual:latest
+
+  # monsters-model:
+  #   model: ai/qwen2.5:1.5B-F16 
+
+  non-player-character-model:
+    model: ai/qwen2.5:1.5B-F16
+
+  guard-model:
+    model: ai/qwen2.5:1.5B-F16
+  sorcerer_model:
+    model: hf.co/menlo/lucy-gguf:q8_0
+  merchant-model:
+    model: ai/qwen2.5:0.5B-F16    
+  healer-model:
+    model: ai/qwen2.5:0.5B-F16
+    #model: hf.co/allenolmo-2-0425-1b-instruct-gguf:q4_k_m
+
+  # For the remote agent
+  boss-model:
+    #model: hf.co/quantfactory/nemotron-mini-4b-instruct-gguf:q4_k_m
+    model: hf.co/menlo/lucy-gguf:q8_0
+
+configs:
+  catalog.yaml:
+    content: |
+      registry:
+
+        mcp-dungeon:
+          remote:
+            url: "http://mcp-dungeon:6060/mcp"
+            transport_type: http
+
+        mcp-toc-toc:
+          remote:
+            url: "http://mcp-toc-toc:9090/mcp"
+            transport_type: http
+
+  
