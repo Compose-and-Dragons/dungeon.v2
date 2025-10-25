@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"npc-agent-with-tools/agents"
-	"npc-agent-with-tools/helpers"
+	"github.com/Compose-and-Dragons/dungeon.v2/compose-dragons/helpers"
+	"github.com/Compose-and-Dragons/dungeon.v2/compose-dragons/agents"
 	"strings"
 	"time"
 

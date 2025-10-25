@@ -3,20 +3,21 @@ services:
     tty: true
     stdin_open: true
     build:
-      context: .
+      context: ../..
       dockerfile_inline: |
-        FROM golang:1.25.1-alpine
+        FROM golang:1.25.2-alpine
         WORKDIR /app
         COPY . .
 
+        WORKDIR /app/samples/07-npc-agent-with-tools
         RUN go mod tidy
         RUN go build -o sorcerer-agent main.go
         #ENTRYPOINT ["./sorcerer-agent"]
     environment:
-      SORCERER_SYSTEM_INSTRUCTIONS_PATH: /app/data/sorcerer_system_instructions.md
-      SORCERER_CONTEXT_PATH: /app/data/sorcerer_background_and_personality.md
+      SORCERER_SYSTEM_INSTRUCTIONS_PATH: /app/samples/07-npc-agent-with-tools/data/sorcerer_system_instructions.md
+      SORCERER_CONTEXT_PATH: /app/samples/07-npc-agent-with-tools/data/sorcerer_background_and_personality.md
       SORCERER_NAME: Elara
-      VECTOR_STORES_PATH: /app/data
+      VECTOR_STORES_PATH: /app/samples/07-npc-agent-with-tools/data
 
       SORCERER_MODEL_TEMPERATURE: 0.0
       SORCERER_MODEL_TOP_P: 0.9

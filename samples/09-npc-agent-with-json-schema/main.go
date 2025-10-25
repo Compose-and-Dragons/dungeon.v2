@@ -3,8 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
-	"npc-agent-with-json-schema/agents"
-	"npc-agent-with-json-schema/helpers"
+	"github.com/Compose-and-Dragons/dungeon.v2/compose-dragons/agents"
+	"github.com/Compose-and-Dragons/dungeon.v2/compose-dragons/helpers"
 )
 
 func main() {

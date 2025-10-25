@@ -86,6 +86,8 @@ func main() {
 	healerAgent := npcagents.GetHealerAgent(ctx)
 	merchantAgent := npcagents.GetMerchantAgent(ctx)
 
+	bossAgent := npcagents.GetBossAgent(ctx)
+
 	// ---------------------------------------------------------
 	// [REMOTE] AGENT: This is the Boss agent
 	// ---------------------------------------------------------
@@ -99,6 +101,7 @@ func main() {
 	idSorcererAgent := strings.ToLower(sorcererAgent.Name)
 	idHealerAgent := strings.ToLower(healerAgent.Name)
 	idMerchantAgent := strings.ToLower(merchantAgent.Name)
+	idBossAgent := strings.ToLower(bossAgent.Name)
 
 	// ---------------------------------------------------------
 	// TEAM: Assemble the agents into a team
@@ -109,6 +112,7 @@ func main() {
 		idSorcererAgent:           sorcererAgent,
 		idHealerAgent:             healerAgent,
 		idMerchantAgent:           merchantAgent,
+		idBossAgent:               bossAgent,
 	}
 	selectedAgent = agentsTeam[idDungeonMasterToolsAgent]
 
@@ -212,7 +216,22 @@ func main() {
 					agentId := strings.ToLower(strings.TrimSpace(answer.Name))
 					agent, exists := agentsTeam[agentId]
 
-					// [TODO] check if you are in the same room as the NPC
+					// ---------------------------------------------------------
+					// Check if you are in the same room as the NPC
+					// ---------------------------------------------------------
+					// [DIRECT CALL TO MCP]
+					strResult, err := dungeonMasterToolsAgent.DirectExecuteTool(ctx, dungeonMasterConfig,
+						&ai.ToolRequest{
+							Name:  "c&d_is_player_in_same_room_as_npc",
+							Input: map[string]any{
+								"name": answer.Name,
+							},
+							Ref:   "",
+						},
+					)
+					if err == nil {
+						ui.Println(ui.Blue, "Ⓜ️ Information Message:\n", strResult)
+					}
 
 					if exists {
 						selectedAgent = agent
@@ -224,21 +243,6 @@ func main() {
 				}
 
 			}
-			/*
-				- c&d_collect_gold
-				- c&d_collect_magic_potion
-				- c&d_create_player
-				- c&d_fight_monster
-				- c&d_get_current_room_info
-				- c&d_get_dungeon_info
-				- c&d_get_dungeon_map
-				- c&d_get_player_info
-				- c&d_is_player_in_same_room_as_npc
-				- c&d_move_by_direction
-				- c&d_move_player
-				- c&d_speak_to_somebody
-
-			*/
 
 			_, err = selectedAgent.StreamCompletion(ctx, dungeonMasterConfig, toolCallsResult.LastMessage, func(ctx context.Context, chunk *ai.ModelResponseChunk) error {
 				fmt.Print(chunk.Text())
@@ -317,12 +321,71 @@ func main() {
 		// ---------------------------------------------------------
 		// TALK TO: AGENT:: **BOSS**
 		// ---------------------------------------------------------
+		case bossAgent.Name:
 
+			ui.Println(ui.Red, "<", selectedAgent.Name, "speaking...>")
+
+			answer, err := selectedAgent.StreamCompletionWithSimilaritySearch(ctx, npcagents.GetBossAgentConfig(), content.Input, func(ctx context.Context, chunk *ai.ModelResponseChunk) error {
+				fmt.Print(chunk.Text())
+				return nil
+			})
+
+			if err != nil {
+				ui.Println(ui.Red, "Error:", err)
+			}
+			// IMPORTANT: Check if the player has defeated the boss
+			// 👀 Look at /data/boss_system_instructions.md
+
+			// ---------------------------------------------------------
+			// You lose 😢
+			// ---------------------------------------------------------
+			if strings.Contains(strings.ToLower(answer), "you are trapped") {
+				ui.Println(ui.Red, "\n💀 You have been defeated by the Boss! Game Over! 💀")
+				ui.Println(ui.Red, "👹 The Boss reigns supreme in the dungeon! 👹")
+				ui.Println(ui.Red, "🎲 Better luck next time! 🎲")
+
+				// [DIRECT CALL TO MCP]
+				strResult, err := dungeonMasterToolsAgent.DirectExecuteTool(ctx, dungeonMasterConfig,
+					&ai.ToolRequest{
+						Name:  "c&d_get_player_info",
+						Input: map[string]any{},
+						Ref:   "",
+					},
+				)
+				if err == nil {
+					ui.Println(ui.Red, "📝 Your player information:\n", strResult)
+				}
+
+				continue
+			}
+			// ---------------------------------------------------------
+			// You win 🎉
+			// ---------------------------------------------------------
+			if strings.Contains(strings.ToLower(answer), "you are free") {
+				ui.Println(ui.Green, "\n💀 You have defeated the Boss! Congratulations, brave adventurer! 💀")
+				ui.Println(ui.Green, "👑 You are now the new ruler of the dungeon! 👑")
+				ui.Println(ui.Green, "🎉 Thanks for playing! 🎉")
+
+				// [DIRECT CALL TO MCP]
+				strResult, err := dungeonMasterToolsAgent.DirectExecuteTool(ctx, dungeonMasterConfig,
+					&ai.ToolRequest{
+						Name:  "c&d_get_player_info",
+						Input: map[string]any{},
+						Ref:   "",
+					},
+				)
+				if err == nil {
+					ui.Println(ui.Green, "📝 Your player information:\n", strResult)
+				}
+				continue
+			}
 
 		default:
 			ui.Printf(ui.Cyan, "\n🤖 %s is thinking...\n", selectedAgent.Name)
 
 		}
+		fmt.Println()
+		fmt.Println()
 
 	}
 
