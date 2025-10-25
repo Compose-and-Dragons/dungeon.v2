@@ -79,7 +79,15 @@
             "border": "1px solid #E2F0F2",
             "borderRadius": "3px",
             "isWholeLine": false
-        },                                  
+        },   
+        {
+            "text": "HELPERS:",
+            "color": "#ffffff",
+            "backgroundColor": "#4503E0",
+            "border": "1px solid #4503E0",
+            "borderRadius": "3px",
+            "isWholeLine": false
+        },                                       
         {
             "text": "NOTE:",
             "color": "#ffffff",
@@ -144,6 +152,14 @@
             "borderRadius": "3px",
             "isWholeLine": false
         },
+        {
+            "text": "[TODO]",
+            "color": "#ffffff",
+            "backgroundColor": "#149C11",
+            "border": "1px solid #149C11",
+            "borderRadius": "3px",
+            "isWholeLine": false
+        },        
         {
             "text": "TEST:",
             "color": "#ffffff",
@@ -369,6 +385,14 @@
             "isWholeLine": false
         },
         {
+            "text": "TEAM:",
+            "color": "#ffffff",
+            "backgroundColor": "#5629DD",
+            "border": "1px solid #5629DD",
+            "borderRadius": "3px",
+            "isWholeLine": false
+        },        
+        {
             "text": "[REMOTE]",
             "color": "#000000",
             "backgroundColor": "#0FD3E1",
@@ -529,6 +553,30 @@
             "isWholeLine": false
         },  
         {
+            "text": "[MCP Client]",
+            "color": "#ffffff",
+            "backgroundColor": "#A15BDF",
+            "border": "1px solid #A15BDF",
+            "borderRadius": "3px",
+            "isWholeLine": false
+        },  
+        {
+            "text": "[MCP Tools Index]",
+            "color": "#ffffff",
+            "backgroundColor": "#5E15DB",
+            "border": "1px solid #5E15DB",
+            "borderRadius": "3px",
+            "isWholeLine": false
+        },          
+        {
+            "text": "[MCP Dungeon Server]",
+            "color": "#ffffff",
+            "backgroundColor": "#52346C",
+            "border": "1px solid #52346C",
+            "borderRadius": "3px",
+            "isWholeLine": false
+        },                         
+        {
             "text": "[DIRECT CALL TO MCP]",
             "color": "#000000",
             "backgroundColor": "#3CE783",
@@ -553,7 +601,14 @@
             "borderRadius": "3px",
             "isWholeLine": false
         },
-
+        {
+            "text": "USER PROMPT: (input)",
+            "color": "#ffffff",
+            "backgroundColor": "#B91F5F",
+            "border": "1px solid #B91F5F",
+            "borderRadius": "3px",
+            "isWholeLine": false
+        },
         {
             "text": "CHAT COMPLETION:",
             "color": "#ffffff",
@@ -571,7 +626,6 @@
             "borderRadius": "3px",
             "isWholeLine": false
         },
-
         {
             "text": "SYSTEM MESSAGE:",
             "color": "#ffffff",
@@ -580,6 +634,14 @@
             "borderRadius": "3px",
             "isWholeLine": false
         },
+        {
+            "text": "[SYSTEM INSTRUCTIONS]",
+            "color": "#ffffff",
+            "backgroundColor": "#0A6E15",
+            "border": "1px solid #0A6E15",
+            "borderRadius": "3px",
+            "isWholeLine": false
+        },        
         {
             "text": "USER MESSAGE:",
             "color": "#ffffff",
@@ -660,6 +722,14 @@
             "borderRadius": "3px",
             "isWholeLine": false
         },
+         {
+            "text": "**Dungeon Master**",
+            "color": "#F7F3F3",
+            "backgroundColor": "#DA0B91",
+            "border": "1px solid #DA0B91",
+            "borderRadius": "3px",
+            "isWholeLine": false
+        },        
         {
             "text": "**GHOST**",
             "color": "#F7F3F3",
