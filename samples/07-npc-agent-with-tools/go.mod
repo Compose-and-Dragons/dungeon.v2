@@ -1,8 +1,11 @@
 module npc-agent-with-tools
 
-go 1.25.1
+go 1.25.2
 
+replace github.com/Compose-and-Dragons/dungeon.v2 => ../..
 require (
+	github.com/Compose-and-Dragons/dungeon.v2 v0.0.0
+
 	github.com/firebase/genkit/go v1.1.0
 	github.com/google/uuid v1.6.0
 	github.com/openai/openai-go v1.12.0

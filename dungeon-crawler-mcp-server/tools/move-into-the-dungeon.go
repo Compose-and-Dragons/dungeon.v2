@@ -13,8 +13,6 @@ import (
 
 	"github.com/Compose-and-Dragons/dungeon.v2/compose-dragons/agents"
 	"github.com/Compose-and-Dragons/dungeon.v2/compose-dragons/helpers"
-	"github.com/Compose-and-Dragons/dungeon.v2/compose-dragons/ui"
-
 )
 
 func GetMoveIntoTheDungeonTool() mcp.Tool {
@@ -111,7 +109,7 @@ func MoveByDirectionToolHandler(player *types.Player, dungeon *types.Dungeon, du
 			dungeonAgentRoomSystemInstruction := helpers.GetEnvOrDefault("DUNGEON_AGENT_ROOM_SYSTEM_INSTRUCTION", "You are a Dungeon Master. You create rooms in a dungeon. Each room has a name and a short description.")
 			// Set the messages to use the room system instruction
 			dungeonAgent.SetSystemInstructions(dungeonAgentRoomSystemInstruction)
-			
+
 			// IMPORTANT: Reset the previous messages
 			dungeonAgent.ResetMessages()
 
@@ -120,15 +118,21 @@ func MoveByDirectionToolHandler(player *types.Player, dungeon *types.Dungeon, du
 			for _, room := range dungeon.Rooms {
 				existingRoomNames = append(existingRoomNames, room.Name)
 			}
-			message := fmt.Sprintf(`
-				Create a new dungeon room with a new name and a short description.
-				Make sure the room name is unique and not one of these existing room names: %s.
-			`, strings.Join(existingRoomNames, ", "))
 
-			ui.Println(ui.Red, message)
+			instructions := []string{
+				"Create a new dungeon room with a unique name and a short description.",
+				"Ensure the room name is not one of these existing room names: " + strings.Join(existingRoomNames, ", "),
+			}
+
+			message := strings.Join(instructions, "\n")
+
+			fmt.Println(strings.Repeat("+", 50))
+			fmt.Println("🟦 Generating room with the following prompt:")
+			fmt.Println(strings.Repeat("-", 50))
+			fmt.Println(message)
+			fmt.Println(strings.Repeat("+", 50))
 
 			response, err := dungeonAgent.JsonCompletion(ctx, config, data.Room{}, message)
-
 
 			// NOTE: for debugging, display the message history
 			dungeonAgent.DisplayHistory()

@@ -1,8 +1,16 @@
 module dmr-genkit-first-npc-with-rag
 
-go 1.25.1
+go 1.25.2
 
-require github.com/firebase/genkit/go v1.0.4
+replace github.com/Compose-and-Dragons/dungeon.v2 => ../..
+
+require (
+	github.com/Compose-and-Dragons/dungeon.v2 v0.0.0
+	github.com/firebase/genkit/go v1.1.0
+	github.com/google/uuid v1.6.0 // indirect
+)
+
+require github.com/openai/openai-go v1.12.0
 
 require (
 	github.com/bahlo/generic-list-go v0.2.0 // indirect
@@ -10,13 +18,10 @@ require (
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/goccy/go-yaml v1.18.0 // indirect
-	github.com/google/dotprompt/go v0.0.0-20250915193815-dfe0abbaa54f // indirect
-	github.com/google/uuid v1.6.0 // indirect
+	github.com/google/dotprompt/go v0.0.0-20251014011017-8d056e027254 // indirect
 	github.com/invopop/jsonschema v0.13.0 // indirect
-	github.com/josharian/intern v1.0.0 // indirect
 	github.com/mailru/easyjson v0.9.1 // indirect
 	github.com/mbleigh/raymond v0.0.0-20250414171441-6b3a58ab9e0a // indirect
-	github.com/openai/openai-go v1.12.0 // indirect
 	github.com/tidwall/gjson v1.18.0 // indirect
 	github.com/tidwall/match v1.2.0 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect

@@ -1,0 +1,5 @@
+TODO:
+- Externalize the boss agent:
+  - With a REST API
+  - With MCP
+  - With `cagent`

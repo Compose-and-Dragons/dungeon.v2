@@ -3,20 +3,23 @@ services:
     tty: true
     stdin_open: true
     build:
-      context: .
+      context: ../..
       dockerfile_inline: |
-        FROM golang:1.25.1-alpine
+        FROM golang:1.25.2-alpine
         WORKDIR /app
-        COPY . .
+        COPY samples/06-gardening-npc-agent/ ./samples/06-gardening-npc-agent/
+        COPY compose-dragons/ ./compose-dragons/
+        COPY go.mod go.sum ./
+        WORKDIR /app/samples/06-gardening-npc-agent
 
         RUN go mod tidy
         RUN go build -o sorcerer-agent main.go
         #ENTRYPOINT ["./sorcerer-agent"]
     environment:
-      SORCERER_SYSTEM_INSTRUCTIONS_PATH: /app/data/sorcerer_system_instructions.md
-      SORCERER_CONTEXT_PATH: /app/data/sorcerer_background_and_personality.md
+      SORCERER_SYSTEM_INSTRUCTIONS_PATH: /app/samples/06-gardening-npc-agent/data/sorcerer_system_instructions.md
+      SORCERER_CONTEXT_PATH: /app/samples/06-gardening-npc-agent/data/sorcerer_background_and_personality.md
       SORCERER_NAME: Elara
-      VECTOR_STORES_PATH: /app/data
+      VECTOR_STORES_PATH: /app/samples/06-gardening-npc-agent/data
 
       SORCERER_MODEL_TEMPERATURE: 0.0
       SORCERER_MODEL_TOP_P: 0.9

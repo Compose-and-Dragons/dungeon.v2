@@ -3,8 +3,8 @@ package main
 import (
 	"context"
 	"log"
-	"npc-agent/agents"
-	"npc-agent/helpers"
+	"github.com/Compose-and-Dragons/dungeon.v2/compose-dragons/helpers"
+	"github.com/Compose-and-Dragons/dungeon.v2/compose-dragons/agents"
 )
 
 func main() {

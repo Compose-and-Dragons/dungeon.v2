@@ -3,8 +3,8 @@ package main
 import (
 	"bufio"
 	"context"
-	"dmr-genkit-first-npc-with-rag/helpers"
-	"dmr-genkit-first-npc-with-rag/rag"
+	"github.com/Compose-and-Dragons/dungeon.v2/compose-dragons/helpers"
+	"github.com/Compose-and-Dragons/dungeon.v2/compose-dragons/rag"
 	"fmt"
 	"log"
 	"os"

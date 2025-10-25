@@ -5,6 +5,18 @@ x-common-variables: &common-variables
   # roomID := fmt.Sprintf("room_%d_%d", newX, newY)
 
   # ---------------------------------------------------------
+  # Boss settings
+  # ---------------------------------------------------------
+
+  BOSS_NAME: Shesepankh
+  BOSS_RACE: Sphinx
+
+  BOSS_MODEL_TEMPERATURE: 0.7
+  BOSS_MODEL_TOP_P: 0.9
+  BOSS_SYSTEM_INSTRUCTIONS_PATH: ./data/boss_system_instructions.md
+  BOSS_CONTEXT_PATH: ./data/boss_background_and_personality.md
+
+  # ---------------------------------------------------------
   # Merchant settings
   # ---------------------------------------------------------
   MERCHANT_ROOM: room_1_1
@@ -229,22 +241,12 @@ services:
       DUNGEON_MASTER_MODEL_TEMPERATURE: 0.0 
       DUNGEON_MASTER_MODEL_TOP_P: 0.9
 
-
       # ---------------------------------------------------------
       # Similarity search settings
       # ---------------------------------------------------------
       SIMILARITY_LIMIT: 0.5
       SIMILARITY_MAX_RESULTS: 2
       VECTOR_STORES_PATH: ./data
-
-
-      # ---------------------------------------------------------
-      # End of level Boss settings
-      # ---------------------------------------------------------
-      BOSS_REMOTE_AGENT_URL: http://dungeon-end-of-level-boss:8080
-      
-      BOSS_NAME: Shesepankh
-      BOSS_RACE: Sphinx
 
     volumes:
       - ./dungeon-master/data:/app/data
@@ -278,58 +280,22 @@ services:
         endpoint_var: MODEL_RUNNER_BASE_URL
         model_var: EMBEDDING_MODEL
 
+      boss-model:
+        endpoint_var: MODEL_RUNNER_BASE_URL
+        model_var: BOSS_MODEL
+
     depends_on:
       mcp-gateway:
         condition: service_started
-      # dungeon-end-of-level-boss:
-      #   condition: service_started
-
-  # dungeon-end-of-level-boss:
-  #   build:
-  #     context: dungeon-end-of-level-boss
-  #     dockerfile: Dockerfile
-  #   ports:
-  #     - 8888:8080 # Map port 8080 to host port 8888
-  #   environment:
-  #     MCP_SERVER_BASE_URL: http://mcp-gateway:9011/mcp
-  #     # ---------------------------------------------------------
-  #     # Boss settings
-  #     # ---------------------------------------------------------
-  #     BOSS_REMOTE_AGENT_HTTP_PORT: 8080
-  #     BOSS_MODEL_TEMPERATURE: 0.7
-  #     #BOSS_NAME: Abou el-Hol
-  #     # Le Sphinx de Gizeh
-  #     BOSS_NAME: Shesepankh
-  #     BOSS_RACE: Sphinx
-  #     BOSS_DESCRIPTION: An ancient and wise Sphinx who guards the exit of the dungeon. Known for posing riddles to those who seek passage.
-  #     BOSS_SYSTEM_INSTRUCTIONS_PATH: ./data/boss_system_instructions.md
-  #     BOSS_CONTEXT_PATH: ./data/boss_background_and_personality.md
-
-  #     # ---------------------------------------------------------
-  #     # Similarity search settings
-  #     # ---------------------------------------------------------
-  #     SIMILARITY_LIMIT: 0.5
-  #     SIMILARITY_MAX_RESULTS: 2
-  #     VECTOR_STORES_PATH: ./data
-
-  #   volumes:
-  #     - ./dungeon-end-of-level-boss/data:/app/data
-
-  #   models:
-  #     boss-model:
-  #       endpoint_var: MODEL_RUNNER_BASE_URL
-  #       model_var: BOSS_MODEL
-
-  #     embedding-model:
-  #       endpoint_var: MODEL_RUNNER_BASE_URL
-  #       model_var: EMBEDDING_MODEL
 
 models:
   dungeon-model:
     model: ai/qwen2.5:1.5B-F16   
+    context_size: 8192
 
   dungeon-master-model:
     model: hf.co/menlo/jan-nano-gguf:q4_k_m
+    context_size: 8192
     #model: hf.co/menlo/lucy-gguf:q8_0
     #model: hf.co/devquasar/quotientai.limbic-tool-use-0.5b-32k-gguf:q4_k_m                                
     
@@ -342,21 +308,30 @@ models:
 
   non-player-character-model:
     model: ai/qwen2.5:1.5B-F16
+    context_size: 8192
 
   guard-model:
     model: ai/qwen2.5:1.5B-F16
+    context_size: 8192
+
   sorcerer_model:
     model: hf.co/menlo/lucy-gguf:q8_0
+    context_size: 8192
+
   merchant-model:
-    model: ai/qwen2.5:0.5B-F16    
+    model: ai/qwen2.5:0.5B-F16 
+    context_size: 8192
+
   healer-model:
     model: ai/qwen2.5:0.5B-F16
+    context_size: 8192
     #model: hf.co/allenolmo-2-0425-1b-instruct-gguf:q4_k_m
 
   # For the remote agent
   boss-model:
     #model: hf.co/quantfactory/nemotron-mini-4b-instruct-gguf:q4_k_m
     model: hf.co/menlo/lucy-gguf:q8_0
+    context_size: 8192
 
 configs:
   catalog.yaml:

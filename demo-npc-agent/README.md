@@ -1,4 +1,4 @@
-
+# Demo NPC Agent
 
 ```bash
 docker compose up --build -d

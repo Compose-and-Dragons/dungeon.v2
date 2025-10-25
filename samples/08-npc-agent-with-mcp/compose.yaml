@@ -3,11 +3,12 @@ services:
     tty: true
     stdin_open: true
     build:
-      context: .
+      context: ../..
       dockerfile_inline: |
-        FROM golang:1.25.1-alpine
+        FROM golang:1.25.2-alpine
         WORKDIR /app
         COPY . .
+        WORKDIR /app/samples/08-npc-agent-with-mcp
 
         RUN go mod tidy
         RUN go build -o sorcerer-agent main.go

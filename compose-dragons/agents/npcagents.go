@@ -374,7 +374,7 @@ func (agent *NPCAgent) DirectExecuteTool(ctx context.Context, config Config, req
 func (agent *NPCAgent) executeToolWithConfirmation(ctx context.Context, req *ai.ToolRequest, tool ai.Tool, history *[]*ai.Message, toolCallsResults *[]any, stopped *bool) {
 	var response string
 	for {
-		fmt.Printf("Do you want to execute tool %q? (y/n/q): ", req.Name)
+		fmt.Printf("Do you want to execute tool %q - %s? (y/n/q): ", req.Name, req.Input)
 		_, err := fmt.Scanln(&response)
 		if err != nil {
 			msg.DisplayError("😡 Error reading input:", err)
