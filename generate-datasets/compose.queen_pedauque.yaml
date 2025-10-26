@@ -1,0 +1,55 @@
+# docker compose -f compose.queen_pedauque.yaml  up --build
+services:
+  dataset-agent:
+    tty: true
+    stdin_open: true
+    build:
+      context: ..
+      dockerfile_inline: |
+        FROM golang:1.25.2-alpine
+        WORKDIR /app
+        # Copy root go.mod and packages
+        COPY go.mod go.sum* ./
+        COPY compose-dragons/agents/ ./compose-dragons/agents/
+        COPY compose-dragons/helpers/ ./compose-dragons/helpers/
+        COPY compose-dragons/tools/ ./compose-dragons/tools/
+        COPY compose-dragons/msg/ ./compose-dragons/msg/
+        COPY compose-dragons/rag/ ./compose-dragons/rag/
+        # Copy generate-datasets
+        COPY generate-datasets/ ./generate-datasets/
+        WORKDIR /app/generate-datasets
+        RUN go mod tidy
+        RUN go build -o generate-datasets main.go
+        ENTRYPOINT ["./generate-datasets"]
+    volumes:
+      - ./data:/app/data
+    environment:
+      MAX_GENERATION_RETRIES: 3
+      NPC_NAME: Queen Pedauque
+      
+      SYSTEM_INSTRUCTIONS: |
+        You are a helpful AI assistant that can generate datasets for training NPC agents in Dungeons & Dragons.
+        All the text generation is done in English.
+
+      MODEL_CONTEXT_DIRECTORY: /app/data/chunks
+
+      TRAINING_DATA_DIRECTORY: /app/data
+      TRAINING_DATA_FILE: queen_pedauque_training_data.json
+
+      MODEL_TEMPERATURE: 1.0
+      MODEL_TOP_P: 0.9
+
+
+    models:
+      chat-model:
+        endpoint_var: MODEL_RUNNER_BASE_URL
+        model_var: CHAT_MODEL
+
+models:
+  chat-model:
+    model: hf.co/menlo/jan-nano-128k-gguf:q4_k_m
+    #model: hf.co/menlo/jan-nano-gguf:q4_k_m
+    #model: hf.co/menlo/jan-nano-gguf:q8_0
+    #model: ai/qwen2.5:latest
+    context_size: 49152
+

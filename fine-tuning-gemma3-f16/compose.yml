@@ -1,0 +1,29 @@
+# docker compose -f compose.yml up --build
+services:
+  fine-tuning:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: fine-tuning
+    stdin_open: true
+    tty: true
+    environment:
+      # gemma3:270M-F16
+      MODEL_BASE_ID: unsloth/gemma-3-270m-it
+      TRAINING_DATA_PATH: data/training_data.json
+      #TRAINING_DATA_PATH: data/training_queen_pedauque_training_data.json
+      SOURCE_MODEL_FILE: gemma-3-270m-it.F16.gguf
+      OUTPUT_MODEL_FILE: fine-tuned-model.F16.gguf
+    volumes:
+      - ./output:/usr/local/app/gguf_output
+      - ./data:/usr/local/app/data
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+# docker model run hf.co/unsloth/gemma-3-270m-it-GGUF:Q4_K_M
+# https://huggingface.co/unsloth/gemma-3-270m-it-GGUF/tree/main

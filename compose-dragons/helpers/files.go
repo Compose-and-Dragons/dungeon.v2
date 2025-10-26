@@ -143,3 +143,26 @@ func WriteTextFile(path, content string) error {
 	}
 	return nil
 }
+
+// GetAllFilesInDirectory returns all file paths in the given directory (non-recursive).
+//
+// Parameters:
+// - dirPath: The directory path to read.
+//
+// Returns:
+// - []string: A slice of full file paths in the directory.
+// - error: An error if the directory cannot be read.
+func GetAllFilesInDirectory(dirPath string) ([]string, error) {
+	entries, err := os.ReadDir(dirPath)
+	if err != nil {
+		return nil, err
+	}
+
+	var files []string
+	for _, entry := range entries {
+		if !entry.IsDir() {
+			files = append(files, filepath.Join(dirPath, entry.Name()))
+		}
+	}
+	return files, nil
+}
