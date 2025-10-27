@@ -9,8 +9,8 @@ services:
     tty: true
     environment:
       MODEL_BASE_ID: unsloth/qwen2.5-1.5b-instruct
-      #TRAINING_DATA_PATH: data/training_data.json
-      TRAINING_DATA_PATH: data/training_queen_pedauque_training_data.json
+      TRAINING_DATA_PATH: data/training_data.json
+      #TRAINING_DATA_PATH: data/training_queen_pedauque_training_data.json
       SOURCE_MODEL_FILE: qwen2.5-1.5b-instruct.F16.gguf
       OUTPUT_MODEL_FILE: fine-tuned-model.F16.gguf
     volumes:

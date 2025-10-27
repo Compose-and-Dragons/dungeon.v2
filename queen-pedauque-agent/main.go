@@ -18,11 +18,13 @@ func main() {
 	ctx := context.Background()
 
 	engineURL := helpers.GetEnvOrDefault("MODEL_RUNNER_BASE_URL", "http://localhost:12434/engines/v1/")
-	chatModelId := "openai/" + helpers.GetEnvOrDefault("CHAT_MODEL", "philippecharriere494/queen-pedauque:0.5b-0.0.0")
+	chatModelId := "openai/" + helpers.GetEnvOrDefault(
+		"CHAT_MODEL",
+		"philippecharriere494/queen-pedauque:1.5b-0.0.0",
+	)
 
 	fmt.Println("🌍 LLM URL:", engineURL)
 	fmt.Println("🤖 Chat Model:", chatModelId)
-
 
 	oaiPlugin := &openai.OpenAI{
 		APIKey: "I💙DockerModelRunner",
@@ -36,7 +38,7 @@ func main() {
 
 	for {
 		reader := bufio.NewReader(os.Stdin)
-		fmt.Printf("🤖🧠 (%s) ask me something - /bye to exit> ", chatModelId)
+		fmt.Print("🤖🧠 ask me something - /bye to exit> ")
 		userMessage, _ := reader.ReadString('\n')
 
 		if strings.HasPrefix(userMessage, "/bye") {
@@ -46,19 +48,12 @@ func main() {
 
 		fullResponse, err := genkit.Generate(ctx, g,
 			ai.WithModelName(chatModelId),
-			// WithMessages sets the messages.
-			// These messages will be sandwiched between the system and user prompts.
 			ai.WithMessages(
 				messages...,
 			),
 			ai.WithPrompt(userMessage),
-			// ai.WithConfig(map[string]any{
-			// 	"temperature": 0.0,
-			// 	"top_p":       0.9,
-			// }),
 
 			ai.WithStreaming(func(ctx context.Context, chunk *ai.ModelResponseChunk) error {
-				// Do something with the chunk...
 				fmt.Print(chunk.Text())
 				return nil
 			}),
@@ -75,8 +70,7 @@ func main() {
 		messages = append(messages, ai.NewModelTextMessage(strings.TrimSpace(fullResponse.Text())))
 
 		fmt.Println()
-		//fmt.Println()
-
+		fmt.Println()
 	}
 
 }

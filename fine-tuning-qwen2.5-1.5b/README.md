@@ -1,4 +1,6 @@
 # Fine tuning of Qwen2.5-0.5B-Instruct to make an NPC for a role-playing game
+> - https://hub.docker.com/repository/docker/philippecharriere494/queen-pedauque/general
+> - https://hub.docker.com/r/philippecharriere494/queen-pedauque/tags
 
 1. Build the container image using the following command:
 
@@ -81,6 +83,13 @@ docker model run ${DOCKER_USERNAME}/npc-elara:0.5b-0.0.0 "Who is your mother"
 ```
 
 
-    
+<!--
+docker model package --gguf $PWD/output/fine-tuned-model.F16.gguf philippecharriere494/queen-pedauque:1.5b-0.0.0 --push
+
+docker model run philippecharriere494/queen-pedauque:1.5b-0.0.0 "Who is your mother"
+-->
+
+
+
 
 

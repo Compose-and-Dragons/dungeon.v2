@@ -1,4 +1,6 @@
 # Fine tuning of Qwen2.5-0.5B-Instruct to make an NPC for a role-playing game
+> - https://hub.docker.com/repository/docker/philippecharriere494/queen-pedauque/general
+> - https://hub.docker.com/r/philippecharriere494/queen-pedauque/tags
 
 1. Build the container image using the following command:
 
