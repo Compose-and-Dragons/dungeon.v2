@@ -80,7 +80,14 @@ docker model package --gguf $PWD/output/fine-tuned-model.F16.gguf ${DOCKER_USERN
 docker model run ${DOCKER_USERNAME}/npc-elara:0.5b-0.0.0 "Who is your mother"
 ```
 
+<!--
+docker model package --gguf $PWD/output/fine-tuned-model.F16.gguf philippecharriere494/queen-pedauque:0.5b-0.0.0 --push
 
-    
+docker model run philippecharriere494/queen-pedauque:0.5b-0.0.0 "Who is your mother"
+-->
+
+
+
+
 
 

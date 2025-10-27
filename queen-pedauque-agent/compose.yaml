@@ -1,0 +1,33 @@
+services:
+  queen-pedauque-agent:
+    tty: true
+    stdin_open: true
+    build:
+      context: ..
+      dockerfile_inline: |
+        FROM golang:1.25.2-alpine
+        WORKDIR /app
+        # Copy root go.mod and packages
+        COPY go.mod go.sum* ./
+        COPY compose-dragons/agents/ ./compose-dragons/agents/
+        COPY compose-dragons/helpers/ ./compose-dragons/helpers/
+        COPY compose-dragons/tools/ ./compose-dragons/tools/
+        COPY compose-dragons/msg/ ./compose-dragons/msg/
+        COPY compose-dragons/rag/ ./compose-dragons/rag/
+        # Copy queen-pedauque-agent
+        COPY queen-pedauque-agent/ ./demo-agent/
+        WORKDIR /app/demo-agent
+        RUN go mod tidy
+        RUN go build -o queen-pedauque-agent main.go
+
+    models:
+      chat-model:
+        endpoint_var: MODEL_RUNNER_BASE_URL
+        model_var: CHAT_MODEL
+
+models:
+  chat-model:
+    model: philippecharriere494/queen-pedauque:0.5b-0.0.0
+    # runtime_flags:
+    #   - "--temp 1.0"
+    #   - "--top-p 0.9"

@@ -248,6 +248,37 @@ func (agent *NPCAgent) StreamCompletion(ctx context.Context, config Config, user
 	return fullResponse.Text(), nil
 }
 
+
+func (agent *NPCAgent) SimpleStreamCompletion(ctx context.Context, config Config, userMessage string, callback ai.ModelStreamCallback) (string, error) {
+
+	fullResponse, err := genkit.Generate(ctx, agent.genKitInstance,
+		ai.WithModelName(config.ChatModelId),
+		// WithMessages sets the messages.
+		// These messages will be sandwiched between the system and user prompts.
+		ai.WithMessages(
+			agent.messages...,
+		),
+		ai.WithPrompt(userMessage),
+		ai.WithConfig(map[string]any{
+			"temperature": config.Temperature,
+			"top_p":       config.TopP,
+		}),
+
+		ai.WithStreaming(callback),
+	)
+
+	if err != nil {
+		return "", err
+	}
+
+	// Append user message to history
+	agent.messages = append(agent.messages, ai.NewUserTextMessage(strings.TrimSpace(userMessage)))
+	// Append assistant response to history
+	agent.messages = append(agent.messages, ai.NewModelTextMessage(strings.TrimSpace(fullResponse.Text())))
+
+	return fullResponse.Text(), nil
+}
+
 func (agent *NPCAgent) StreamCompletionWithSimilaritySearch(ctx context.Context, config Config, userMessage string, callback ai.ModelStreamCallback) (string, error) {
 
 	// Retrieve relevant context from the vector store
