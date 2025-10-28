@@ -27,7 +27,7 @@ services:
 
 models:
   chat-model:
-    model: philippecharriere494/queen-pedauque:0.5b-0.0.0
+    model: philippecharriere494/queen-pedauque:1.5b-0.0.0
     # runtime_flags:
     #   - "--temp 1.0"
     #   - "--top-p 0.9"
