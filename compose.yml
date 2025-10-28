@@ -77,7 +77,7 @@ services:
 
   mcp-gateway:
     # mcp-gateway secures your MCP servers
-    image: docker/mcp-gateway:v1
+    image: docker/mcp-gateway:v2
     ports:
       - 9011:9011
     use_api_socket: true
