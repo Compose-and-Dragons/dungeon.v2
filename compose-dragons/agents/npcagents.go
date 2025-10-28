@@ -197,6 +197,36 @@ func (agent *NPCAgent) JsonCompletion(ctx context.Context, config Config, output
 	return fullResponse.Text(), nil
 }
 
+func (agent *NPCAgent) JsonStreamCompletion(ctx context.Context, config Config, outputType any, userMessage string, callback ai.ModelStreamCallback) (string, error) {
+	fullResponse, err := genkit.Generate(ctx, agent.genKitInstance,
+		ai.WithModelName(config.ChatModelId),
+		ai.WithSystem(agent.systemInstructions),
+		// WithMessages sets the messages.
+		// These messages will be sandwiched between the system and user prompts.
+		ai.WithMessages(
+			agent.messages...,
+		),
+		ai.WithPrompt(userMessage),
+		ai.WithConfig(map[string]any{
+			"temperature": config.Temperature,
+			"top_p":       config.TopP,
+		}),
+		ai.WithOutputType(outputType),
+		ai.WithStreaming(callback),
+	)
+
+	if err != nil {
+		return "", err
+	}
+
+	// Append user message to history
+	agent.messages = append(agent.messages, ai.NewUserTextMessage(strings.TrimSpace(userMessage)))
+	// Append assistant response to history
+	agent.messages = append(agent.messages, ai.NewModelTextMessage(strings.TrimSpace(fullResponse.Text())))
+
+	return fullResponse.Text(), nil
+}
+
 func (agent *NPCAgent) SimilaritySearch(ctx context.Context, config Config, userMessage string) (string, error) {
 	// Retrieve relevant context from the vector store
 	similarDocuments, err := retrieveSimilarDocuments(ctx, userMessage, agent.memoryRetriever, config.SimilaritySearchLimit, config.SimilaritySearchMaxResults)

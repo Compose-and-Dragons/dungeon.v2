@@ -48,6 +48,9 @@ services:
 models:
   chat-model:
     model: hf.co/menlo/jan-nano-128k-gguf:q4_k_m
+    #model: ai/qwen3:latest
+    #model: ai/magistral-small-3.2:latest
+    #model: ai/qwen2.5:7B-F16
     #model: hf.co/menlo/jan-nano-gguf:q4_k_m
     #model: hf.co/menlo/jan-nano-gguf:q8_0
     #model: ai/qwen2.5:latest

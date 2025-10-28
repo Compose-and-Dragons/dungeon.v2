@@ -1,0 +1,32 @@
+services:
+  sorcerer-json-agent:
+    tty: true
+    stdin_open: true
+    build:
+      context: ../..
+      dockerfile_inline: |
+        FROM golang:1.25.2-alpine
+        WORKDIR /app
+        COPY . .
+        WORKDIR /app/samples/10-npc-agent-with-json-schema
+
+        RUN go mod tidy
+        RUN go build -o sorcerer-agent main.go
+        #ENTRYPOINT ["./sorcerer-agent"]
+    environment:
+
+      SORCERER_NAME: Elara
+      VECTOR_STORES_PATH: /app/data
+
+      SORCERER_MODEL_TEMPERATURE: 0.0
+      SORCERER_MODEL_TOP_P: 0.9
+
+    models:
+      chat-model:
+        endpoint_var: MODEL_RUNNER_BASE_URL
+        model_var: CHAT_MODEL
+
+
+models:
+  chat-model:
+    model: ai/qwen2.5:1.5B-F16
