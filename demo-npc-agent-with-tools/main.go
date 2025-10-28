@@ -1,18 +1,19 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"log"
-	"github.com/Compose-and-Dragons/dungeon.v2/compose-dragons/agents"
-	"github.com/Compose-and-Dragons/dungeon.v2/compose-dragons/helpers"
-	"github.com/Compose-and-Dragons/dungeon.v2/compose-dragons/tools"
 	"os"
 	"strings"
 
+	"github.com/Compose-and-Dragons/dungeon.v2/compose-dragons/agents"
+	"github.com/Compose-and-Dragons/dungeon.v2/compose-dragons/helpers"
+	"github.com/Compose-and-Dragons/dungeon.v2/compose-dragons/tools"
+
 	"github.com/firebase/genkit/go/plugins/mcp"
 )
-
 
 func main() {
 	ctx := context.Background()
@@ -26,7 +27,6 @@ func main() {
 	fmt.Println("🛠️ Tools Model:", toolsModelId)
 
 	agentName := helpers.GetEnvOrDefault("SORCERER_NAME", "Elara")
-
 
 	temperature := helpers.StringToFloat(helpers.GetEnvOrDefault("SORCERER_MODEL_TEMPERATURE", "0.0"))
 	topP := helpers.StringToFloat(helpers.GetEnvOrDefault("SORCERER_MODEL_TOP_P", "0.9"))
@@ -47,11 +47,11 @@ func main() {
 	toolsRefs := tools.MCPCatalog(ctx, mcpClient)
 
 	config := agents.Config{
-		EngineURL:                  engineURL,
-		Temperature:                temperature,
-		TopP:                       topP,
-		ToolsModelId:               toolsModelId,
-		Tools:                      toolsRefs,
+		EngineURL:    engineURL,
+		Temperature:  temperature,
+		TopP:         topP,
+		ToolsModelId: toolsModelId,
+		Tools:        toolsRefs,
 	}
 
 	sorcererAgent := agents.NPCAgent{}
@@ -64,33 +64,46 @@ func main() {
 	`
 	sorcererAgent.SetSystemInstructions(systemMsg)
 
-	toolCallsResult, err := sorcererAgent.DetectAndExecuteToolCallsWithConfirmation(ctx, config, `
-		Roll 3 dices with 6 faces each. 
+	/*
+		Roll 3 dices with 6 faces each.
 		Then generate a character name for an elf.
 		Finally, roll 2 dices with 8 faces each.
 		After that, generate a character name for a dwarf.
-	`)
-	if err != nil {
-		log.Fatal("😡:", err)
-	}
-	fmt.Println("🛠️ Total calls:", toolCallsResult.TotalCalls)
-	fmt.Println("🛠️ Results:\n", toolCallsResult.Results)
-	fmt.Println("🛠️ Final Answer:\n", toolCallsResult.LastMessage)
+	*/
 
-	fmt.Println(strings.Repeat("=", 50))
+	for {
+		reader := bufio.NewReader(os.Stdin)
+		fmt.Print("🤖🧠 ask me something - /bye to exit> ")
+		userMessage, _ := reader.ReadString('\n')
 
-	toolCallsResult, err = sorcererAgent.DetectAndExecuteToolCalls(ctx, config, `
-		Say hello to the world.
-		Generate a character name for a human.
-		Finally, roll 2 dices with 10 faces each.
-		Say hello world to Bob Morane.
-	`)
-	if err != nil {
-		log.Fatal("😡:", err)
+		if strings.HasPrefix(userMessage, "/bye") {
+			fmt.Println("👋 Bye!")
+			break
+		}
+		toolCallsResult, err := sorcererAgent.DetectAndExecuteToolCallsWithConfirmation(ctx, config, userMessage)
+
+		if err != nil {
+			log.Fatal("😡:", err)
+		}
+		fmt.Println("🛠️ Total calls:", toolCallsResult.TotalCalls)
+		fmt.Println("🛠️ Results:\n", toolCallsResult.Results)
+		fmt.Println("🛠️ Final Answer:\n", toolCallsResult.LastMessage)
+
+		fmt.Println(strings.Repeat("=", 50))
+
 	}
-	fmt.Println("🛠️ Total calls:", toolCallsResult.TotalCalls)
-	fmt.Println("🛠️ Results:\n", toolCallsResult.Results)
-	fmt.Println("🛠️ Final Answer:\n", toolCallsResult.LastMessage)
-	//sorcererAgent.LoopCompletion(ctx, config)
+
+	// toolCallsResult, err = sorcererAgent.DetectAndExecuteToolCalls(ctx, config, `
+	// 	Say hello to the world.
+	// 	Generate a character name for a human.
+	// 	Finally, roll 2 dices with 10 faces each.
+	// 	Say hello world to Bob Morane.
+	// `)
+	// if err != nil {
+	// 	log.Fatal("😡:", err)
+	// }
+	// fmt.Println("🛠️ Total calls:", toolCallsResult.TotalCalls)
+	// fmt.Println("🛠️ Results:\n", toolCallsResult.Results)
+	// fmt.Println("🛠️ Final Answer:\n", toolCallsResult.LastMessage)
 
 }
