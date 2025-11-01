@@ -1,0 +1,119 @@
+<mxfile host="65bd71144e">
+    <diagram name="Compose Model Management" id="compose-flow">
+        <mxGraphModel dx="781" dy="637" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="start" value="Compose up" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#90EE90;strokeColor=#228B22;fontSize=14;fontStyle=1;" parent="1" vertex="1">
+                    <mxGeometry x="500" y="40" width="160" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="parse" value="Parse Compose files" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#87CEFA;strokeColor=#4169E1;fontSize=12;" parent="1" vertex="1">
+                    <mxGeometry x="500" y="130" width="160" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="startSvc" value="Start services" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#87CEFA;strokeColor=#4169E1;fontSize=12;" parent="1" vertex="1">
+                    <mxGeometry x="500" y="220" width="160" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="checkModels" value="Check &#39;models&#39;" style="rhombus;whiteSpace=wrap;html=1;fillColor=#FFE4B5;strokeColor=#FF8C00;fontSize=12;" parent="1" vertex="1">
+                    <mxGeometry x="490" y="310" width="180" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="continueNo" value="Continue up process" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFB6C1;strokeColor=#DC143C;fontSize=14;fontStyle=1;" parent="1" vertex="1">
+                    <mxGeometry x="800" y="325" width="160" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="callMDR" value="Call Model Runner" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#90EE90;strokeColor=#228B22;fontSize=12;" parent="1" vertex="1">
+                    <mxGeometry x="500" y="440" width="160" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="checkPull" value="Need to pull&lt;br&gt;missing models?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#FFE4B5;strokeColor=#FF8C00;fontSize=12;" parent="1" vertex="1">
+                    <mxGeometry x="490" y="540" width="180" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="pullModels" value="Pull models" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFB6C1;strokeColor=#DC143C;fontSize=12;fontStyle=1" parent="1" vertex="1">
+                    <mxGeometry x="803" y="555" width="160" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="configModels" value="Configure Models" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#87CEFA;strokeColor=#4169E1;fontSize=12;" parent="1" vertex="1">
+                    <mxGeometry x="500" y="670" width="160" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="sendInfo" value="Send back model name&lt;br&gt;and url to Compose" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#DDA0DD;strokeColor=#9932CC;fontSize=12;" parent="1" vertex="1">
+                    <mxGeometry x="480" y="770" width="200" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="prepareEnv" value="Set env variables&lt;br&gt;for service containers" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#87CEFA;strokeColor=#4169E1;fontSize=12;" parent="1" vertex="1">
+                    <mxGeometry x="480" y="870" width="200" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="6" value="" style="edgeStyle=none;html=1;" edge="1" parent="1" source="checkCustom" target="passEnvs">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="8" value="" style="edgeStyle=none;html=1;" edge="1" parent="1" source="checkCustom" target="setDefault">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="11" value="NO" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="8">
+                    <mxGeometry x="-0.48" relative="1" as="geometry">
+                        <mxPoint x="-7" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="9" value="" style="edgeStyle=none;html=1;" edge="1" parent="1" source="checkCustom" target="setCustom">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="10" value="YES" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="9">
+                    <mxGeometry x="-0.32" y="-3" relative="1" as="geometry">
+                        <mxPoint x="3" y="-3" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="checkCustom" value="Custom env&lt;br&gt;variables?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#FFE4B5;strokeColor=#FF8C00;fontSize=12;" parent="1" vertex="1">
+                    <mxGeometry x="490" y="970" width="180" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="setDefault" value="Set [MODEL]_MODEL &amp;&lt;br&gt;[MODEL]_URL" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#98FB98;strokeColor=#228B22;fontSize=12;" parent="1" vertex="1">
+                    <mxGeometry x="280" y="985" width="160" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="setCustom" value="Use model_var &amp;&lt;br&gt;endpoint_var to set env var" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#98FB98;strokeColor=#228B22;fontSize=12;" parent="1" vertex="1">
+                    <mxGeometry x="720" y="985" width="180" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="passEnvs" value="Pass env variables&lt;br&gt;to containers" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#87CEFA;strokeColor=#4169E1;fontSize=12;" parent="1" vertex="1">
+                    <mxGeometry x="480" y="1100" width="200" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="startContainers" value="Start service containers" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#90EE90;strokeColor=#228B22;fontSize=12;" parent="1" vertex="1">
+                    <mxGeometry x="480" y="1200" width="200" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="continueFinal" value="Continue up process" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFB6C1;strokeColor=#DC143C;fontSize=14;fontStyle=1;" parent="1" vertex="1">
+                    <mxGeometry x="500" y="1300" width="160" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="arrow1" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="start" target="parse" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="arrow2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="parse" target="startSvc" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="arrow3" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="startSvc" target="checkModels" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="arrow4" value="NO" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=none;startFill=0;" parent="1" source="checkModels" target="continueNo" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="arrow5" value="YES" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=none;startFill=0;" parent="1" source="checkModels" target="callMDR" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="arrow6" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="callMDR" target="checkPull" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="arrow7" value="NO" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="checkPull" target="pullModels" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="arrow8" value="YES" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=none;startFill=0;" parent="1" source="checkPull" target="configModels" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="arrow10" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="configModels" target="sendInfo" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="arrow11" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="sendInfo" target="prepareEnv" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="arrow12" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="prepareEnv" target="checkCustom" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="arrow17" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="passEnvs" target="startContainers" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="arrow18" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="startContainers" target="continueFinal" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

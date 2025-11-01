@@ -1,6 +1,0 @@
-Revenir sur la problématique des SLMs mauvais avec les tools
-Une démo complète d'un agent avec le support des tools et dockerisable
-et comment utiliser agentic compose + la MCP gateway
-ajouter le RAG avec? -> non
-  => on expliquera dans la 2eme partie comment creer un agent avec RAG
-
