@@ -53,7 +53,9 @@ services:
       - --transport=streaming
       - --verbose
       - --catalog=/mcp/catalog.yaml
-      - --servers=mcp-fancy-names,mcp-dnd,mcp-hello-world
+      - --servers=mcp-dnd,mcp-hello-world
+      - --tools=mcp-dnd:*
+      - --tools=mcp-hello-world:*
 
     configs:
       - source: catalog.yaml
@@ -62,27 +64,27 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
-      mcp-fancy-names:
-        condition: service_healthy
+      # mcp-fancy-names:
+      #   condition: service_healthy
       mcp-hello-world:
         condition: service_healthy
       mcp-dnd:
         condition: service_healthy
 
 
-  mcp-fancy-names:
-    build:
-      context: mcp-servers/fancy-names
-      dockerfile: Dockerfile    
-    environment:
-      MCP_HTTP_PORT: 6060
+  # mcp-fancy-names:
+  #   build:
+  #     context: mcp-servers/fancy-names
+  #     dockerfile: Dockerfile    
+  #   environment:
+  #     MCP_HTTP_PORT: 6060
     
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:6060/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
+  #   healthcheck:
+  #     test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:6060/health"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
+  #     start_period: 40s
 
   mcp-hello-world:
     build:
@@ -117,10 +119,10 @@ configs:
     content: |
       registry:
 
-        mcp-fancy-names:
-          remote:
-            url: "http://mcp-fancy-names:6060/mcp"
-            transport_type: http
+        # mcp-fancy-names:
+        #   remote:
+        #     url: "http://mcp-fancy-names:6060/mcp"
+        #     transport_type: http
 
         mcp-hello-world:
           remote:
@@ -131,9 +133,6 @@ configs:
           remote:
             url: "http://mcp-dnd:6060/mcp"
             transport_type: http
-
-
-
 
 models:
   chat-model:

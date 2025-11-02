@@ -10,7 +10,7 @@ paginate: true
 }
 </style>
 # 🤖📡 Simple Agent with Docker MCP Gateway 
-# & 🐙 Agentic Compose
+## & 🐙 Agentic Compose
 <div class="mermaid">
 graph TD
     A[sorcerer-mcp-agent<br/>Go Application] -->|HTTP :9011| B[mcp-gateway<br/>Docker MCP Gateway]

@@ -18,9 +18,8 @@ import (
 func main() {
 	ctx := context.Background()
 
-	//engineURL := helpers.GetEnvOrDefault("MODEL_RUNNER_BASE_URL", "http://localhost:12434/engines/llama.cpp/v1")
 	engineURL := helpers.GetEnvOrDefault("MODEL_RUNNER_BASE_URL", "http://localhost:12434/engines/v1/")
-	// IMPORTANT: prefix with "openai/" to use the OpenAI plugin TODO: make this automatic
+	// IMPORTANT: prefix with "openai/" to use the OpenAI plugin
 	toolsModelId := "openai/" + helpers.GetEnvOrDefault("TOOLS_MODEL", "hf.co/menlo/jan-nano-gguf:q4_k_m")
 
 	fmt.Println("🌍 LLM URL:", engineURL)
@@ -92,18 +91,5 @@ func main() {
 		fmt.Println(strings.Repeat("=", 50))
 
 	}
-
-	// toolCallsResult, err = sorcererAgent.DetectAndExecuteToolCalls(ctx, config, `
-	// 	Say hello to the world.
-	// 	Generate a character name for a human.
-	// 	Finally, roll 2 dices with 10 faces each.
-	// 	Say hello world to Bob Morane.
-	// `)
-	// if err != nil {
-	// 	log.Fatal("😡:", err)
-	// }
-	// fmt.Println("🛠️ Total calls:", toolCallsResult.TotalCalls)
-	// fmt.Println("🛠️ Results:\n", toolCallsResult.Results)
-	// fmt.Println("🛠️ Final Answer:\n", toolCallsResult.LastMessage)
 
 }
