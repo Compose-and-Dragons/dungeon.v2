@@ -31,3 +31,6 @@ models:
     # runtime_flags:
     #   - "--temp 1.0"
     #   - "--top-p 0.9"
+
+# docker compose up -d
+# docker compose attach queen-pedauque-agent

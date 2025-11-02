@@ -1,0 +1,24 @@
+# Demo Instructions
+
+Pre-requisites:
+```bash
+docker model pull philippecharriere494/queen-pedauque:1.5b-0.0.0
+# optional
+docker model pull philippecharriere494/queen-pedauque:0.5b-0.0.0
+```
+
+1. Go to [/queen-pedauque-agent/compose.yaml#L28](/queen-pedauque-agent/compose.yaml#L28)
+2. Open a terminal
+3. Run:
+```bash
+docker compose up -d
+docker compose attach queen-pedauque-agent
+```
+
+```bash
+🤖🧠 ask me something - /bye to exit> I love chocolatine
+```
+
+```bash
+docker compose down
+```

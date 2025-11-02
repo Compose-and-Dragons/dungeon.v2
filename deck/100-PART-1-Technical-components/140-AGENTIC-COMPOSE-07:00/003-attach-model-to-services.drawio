@@ -1,6 +1,6 @@
 <mxfile host="65bd71144e">
     <diagram name="Compose Model Management" id="compose-flow">
-        <mxGraphModel dx="781" dy="637" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+        <mxGraphModel dx="1146" dy="578" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -37,21 +37,21 @@
                 <mxCell id="prepareEnv" value="Set env variables&lt;br&gt;for service containers" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#87CEFA;strokeColor=#4169E1;fontSize=12;" parent="1" vertex="1">
                     <mxGeometry x="480" y="870" width="200" height="50" as="geometry"/>
                 </mxCell>
-                <mxCell id="6" value="" style="edgeStyle=none;html=1;" edge="1" parent="1" source="checkCustom" target="passEnvs">
+                <mxCell id="6" value="" style="edgeStyle=none;html=1;" parent="1" source="checkCustom" target="passEnvs" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="8" value="" style="edgeStyle=none;html=1;" edge="1" parent="1" source="checkCustom" target="setDefault">
+                <mxCell id="8" value="" style="edgeStyle=none;html=1;" parent="1" source="checkCustom" target="setDefault" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="11" value="NO" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="8">
+                <mxCell id="11" value="NO" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="8" vertex="1" connectable="0">
                     <mxGeometry x="-0.48" relative="1" as="geometry">
                         <mxPoint x="-7" as="offset"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="9" value="" style="edgeStyle=none;html=1;" edge="1" parent="1" source="checkCustom" target="setCustom">
+                <mxCell id="9" value="" style="edgeStyle=none;html=1;" parent="1" source="checkCustom" target="setCustom" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="10" value="YES" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="9">
+                <mxCell id="10" value="YES" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="9" vertex="1" connectable="0">
                     <mxGeometry x="-0.32" y="-3" relative="1" as="geometry">
                         <mxPoint x="3" y="-3" as="offset"/>
                     </mxGeometry>
@@ -92,10 +92,10 @@
                 <mxCell id="arrow6" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="callMDR" target="checkPull" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="arrow7" value="NO" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="checkPull" target="pullModels" edge="1">
+                <mxCell id="arrow7" value="YES" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="checkPull" target="pullModels" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="arrow8" value="YES" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=none;startFill=0;" parent="1" source="checkPull" target="configModels" edge="1">
+                <mxCell id="arrow8" value="NO" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=none;startFill=0;" parent="1" source="checkPull" target="configModels" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
                 <mxCell id="arrow10" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="configModels" target="sendInfo" edge="1">
