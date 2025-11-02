@@ -1,0 +1,15 @@
+# Demo Instructions
+
+Pre-requisites:
+```bash
+docker model pull philippecharriere494/queen-pedauque:1.5b-0.0.0
+# optional
+docker model pull philippecharriere494/queen-pedauque:0.5b-0.0.0
+```
+
+1. Go to [/queen-pedauque-genkit/main.go](/queen-pedauque-genkit/main.go)
+2. Open a terminal
+3. Run:
+```bash
+go run main.go
+```

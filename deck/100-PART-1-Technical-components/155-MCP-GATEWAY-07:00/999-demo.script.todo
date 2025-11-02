@@ -1,0 +1,16 @@
+# Demo Instructions
+
+## Show the source code of the hello MCP server and explain
+
+## Show the compose file and explain
+
+## Start the services
+```bash
+docker compose -f compose.only.mcp.yaml up
+```
+
+## Inspector:
+
+- Streamable http
+- http://localhost:9011/mcp
+- Connection Type: Via Proxy

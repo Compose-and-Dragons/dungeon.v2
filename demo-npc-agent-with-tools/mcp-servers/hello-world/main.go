@@ -21,7 +21,6 @@ func main() {
 		"0.0.0",
 	)
 	
-
 	helloWorldTool := mcp.NewTool("hello_world",
 		mcp.WithDescription("A simple hello world tool"),
 	)

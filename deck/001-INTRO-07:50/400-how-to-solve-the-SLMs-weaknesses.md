@@ -20,7 +20,7 @@ paginate: true
 | Less training data 2    | provide data on demand    | **RAG**, **MCP** |
 | Fewer parameters        | externalize some tasks.   | **MCP** (A2A)    |
 | Smaller context windows | smaller but accurate data | **RAG**          |
-| Bad at function calling | SLMs natively optimized for MCP| 🕵️‍♂️🔎🔎🔎          |
+| Bad at function calling | SLMs natively optimized for MCP| 🕵️‍♂️🔎🔎🔎      |
 
 > - *RAG: Retrieval-Augmented Generation*
 > - *MCP: Model Context Protocol*, *A2A: Agent to Agent*

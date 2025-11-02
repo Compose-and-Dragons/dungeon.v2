@@ -1,0 +1,23 @@
+# Demo Instructions
+
+Pre-requisites:
+```bash
+docker model pull philippecharriere494/queen-pedauque:1.5b-0.0.0
+# optional
+docker model pull philippecharriere494/queen-pedauque:0.5b-0.0.0
+```
+
+1. Start Docker Desktop
+2. Go to the Models List
+3. Click on the run button of philippecharriere494/queen-pedauque:1.5b-0.0.0
+4. Ask this:
+```
+Hello who are you?
+I love the pains au chocolat
+```
+5. Show the requests panel
+6. Open the DD terminal
+7. Run: docker model run philippecharriere494/queen-pedauque:1.5b-0.0.0
+5. Ask something -> in theory you should see the update into the requests list
+
+And: explain that this model has been fine-tuned for the conference
