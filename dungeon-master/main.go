@@ -21,6 +21,23 @@ import (
 var agentsTeam map[string]*agents.NPCAgent
 var selectedAgent *agents.NPCAgent
 
+// MCPRoomCheckResult represents the structure of MCP tool call results
+type MCPRoomCheckResult struct {
+	Content []MCPContent `json:"content"`
+}
+
+type MCPContent struct {
+	Type string `json:"type"`
+	Text string `json:"text"`
+}
+
+// RoomCheckResult represents the parsed JSON from the text field
+type RoomCheckResult struct {
+	InSameRoom   bool   `json:"in_same_room"`
+	PlayerRoomID string `json:"player_room_id"`
+	Message      string `json:"message"`
+}
+
 func main() {
 
 	ctx := context.Background()
@@ -231,6 +248,16 @@ func main() {
 					)
 					if err == nil {
 						ui.Println(ui.Blue, "Ⓜ️ Information Message:\n", strResult)
+
+						// Parse strResult into MCPResult structure
+						resultBytes, _ := json.Marshal(strResult)
+						
+						var mcpResult MCPRoomCheckResult
+						json.Unmarshal(resultBytes, &mcpResult)
+
+						fmt.Println("🛑 MCP Result Content:", mcpResult)
+
+						
 					}
 
 					if exists {
