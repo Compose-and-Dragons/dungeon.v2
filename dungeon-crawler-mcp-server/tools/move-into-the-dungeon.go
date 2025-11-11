@@ -172,8 +172,21 @@ func MoveByDirectionToolHandler(player *types.Player, dungeon *types.Dungeon, du
 			guardRoom := helpers.GetEnvOrDefault("GUARD_ROOM", "room_0_2")
 			sorcererRoom := helpers.GetEnvOrDefault("SORCERER_ROOM", "room_2_0")
 			healerRoom := helpers.GetEnvOrDefault("HEALER_ROOM", "room_2_2")
+			bossRoom := helpers.GetEnvOrDefault("BOSS_ROOM", "room_3_3")
 
 			switch roomID {
+			case bossRoom:
+				hasNonPlayerCharacter = true
+				nonPlayerCharacter = types.NonPlayerCharacter{
+					Type:     types.Merchant,
+					Name:     helpers.GetEnvOrDefault("BOSS_NAME", "[default]Shesepankh the Boss"),
+					Race:     helpers.GetEnvOrDefault("BOSS_RACE", "Sphinx"),
+					Position: types.Coordinates{X: newX, Y: newY},
+					RoomID:   roomID,
+				}
+				fmt.Println("⏳✳️✳️✳️ Creating THE 🔥BOSS", nonPlayerCharacter.Type, "at coordinates:", newX, newY)
+
+
 			case merchantRoom:
 				hasNonPlayerCharacter = true
 				nonPlayerCharacter = types.NonPlayerCharacter{
