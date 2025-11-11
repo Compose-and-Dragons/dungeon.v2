@@ -674,6 +674,7 @@ func (agent *NPCAgent) DetectAndExecuteToolCalls(ctx context.Context, config Con
 //	   │
 //	   └──► Call executeTool()
 func (agent *NPCAgent) DetectAndExecuteToolCallsWithConfirmation(ctx context.Context, config Config, userMessage string) (*ToolCallsResult, error) {
+	// IMPORTANT: agent.executeToolWithConfirmation == executor
 	return agent.detectAndExecuteToolCallsLoop(ctx, config, userMessage, agent.executeToolWithConfirmation)
 }
 

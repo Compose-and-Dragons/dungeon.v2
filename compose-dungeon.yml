@@ -6,6 +6,14 @@ x-common-variables: &common-variables
   # roomID := fmt.Sprintf("room_%d_%d", newX, newY)
 
   # ---------------------------------------------------------
+  # Boss settings
+  # ---------------------------------------------------------
+  BOSS_ROOM: room_3_3
+  # Boss name
+  BOSS_NAME: Shesepankh
+  BOSS_RACE: Sphinx
+
+  # ---------------------------------------------------------
   # Merchant settings
   # ---------------------------------------------------------
   MERCHANT_ROOM: room_1_1
