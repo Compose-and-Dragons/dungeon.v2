@@ -202,12 +202,13 @@ func main() {
 
 		switch selectedAgent.Name {
 		// ---------------------------------------------------------
-		// TALK TO: AGENT: **Dungeon Master** [COMPLETION] with [TOOLS]
+		//  AGENT: **Dungeon Master** [COMPLETION] with [TOOLS]
 		// ---------------------------------------------------------
 		case dungeonMasterToolsAgentName: // Zephyr the Dungeon Master
 
 			ui.Println(ui.Yellow, "<", selectedAgent.Name, "speaking...>")
 
+			// [TOOL CALLS] DETECTION
 			toolCallsResult, err := selectedAgent.DetectAndExecuteToolCallsWithConfirmation(ctx, dungeonMasterConfig, content.Input)
 			if err != nil {
 				log.Fatal("😡:", err)
@@ -223,6 +224,7 @@ func main() {
 
 				switch toolName {
 
+				
 				case "c&d_speak_to_somebody":
 					// Switch to the selected agent
 					var answer struct {
@@ -234,7 +236,7 @@ func main() {
 					agent, exists := agentsTeam[agentId]
 
 					// ---------------------------------------------------------
-					// Check if you are in the same room as the NPC
+					// [Check if you are in the same room as the NPC]
 					// ---------------------------------------------------------
 					// [DIRECT CALL TO MCP]
 					strResult, err := dungeonMasterToolsAgent.DirectExecuteTool(ctx, dungeonMasterConfig,
@@ -291,7 +293,7 @@ func main() {
 
 					}
 
-				}
+				} // End case "c&d_speak_to_somebody"
 
 			}
 

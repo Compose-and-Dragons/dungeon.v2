@@ -583,7 +583,15 @@
             "border": "1px solid #3CE783",
             "borderRadius": "3px",
             "isWholeLine": false
-        },                      
+        },      
+        {
+            "text": "[Check if you are in the same room as the NPC]",
+            "color": "#000000",
+            "backgroundColor": "#9FE643",
+            "border": "1px solid #9FE643",
+            "borderRadius": "3px",
+            "isWholeLine": false
+        },                         
         {
             "text": "TOOL CALLS:",
             "color": "#ffffff",
