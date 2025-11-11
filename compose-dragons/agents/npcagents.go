@@ -3,6 +3,7 @@ package agents
 import (
 	"bufio"
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
@@ -360,19 +361,25 @@ func (agent *NPCAgent) DirectExecuteTool(ctx context.Context, config Config, req
 		return "", err
 	}
 
-	// Convert output to string based on its type
-	switch v := output.(type) {
-	case string:
-		return v, nil
-	case []byte:
-		return string(v), nil
-	default:
-		// For other types (maps, structs, etc.), convert to JSON string
-		if v == nil {
-			return "", nil
-		}
-		return fmt.Sprintf("%v", v), nil
+	jsonOutput, err := json.Marshal(output)
+	if err != nil {
+		return "", err
 	}
+
+	// Convert output to string based on its type
+	// switch v := output.(type) {
+	// case string:
+	// 	return v, nil
+	// case []byte:
+	// 	return string(v), nil
+	// default:
+	// 	// For other types (maps, structs, etc.), convert to JSON string
+	// 	if v == nil {
+	// 		return "", nil
+	// 	}
+	// 	return fmt.Sprintf("%v", v), nil
+	// }
+	return string(jsonOutput), nil
 
 }
 

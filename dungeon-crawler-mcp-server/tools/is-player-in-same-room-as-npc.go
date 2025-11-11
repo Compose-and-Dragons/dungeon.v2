@@ -72,6 +72,7 @@ func IsPlayerInSameRoomAsNPCToolHandler(player *types.Player, dungeon *types.Dun
 				Message:    fmt.Sprintf("❌ No NPC found in room '%s'", currentRoom.ID),
 			}
 			responseJSON, _ := json.MarshalIndent(response, "", "  ")
+
 			return mcp.NewToolResultText(string(responseJSON)), nil
 		}
 

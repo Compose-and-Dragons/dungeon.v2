@@ -21,22 +21,22 @@ import (
 var agentsTeam map[string]*agents.NPCAgent
 var selectedAgent *agents.NPCAgent
 
-// MCPRoomCheckResult represents the structure of MCP tool call results
-type MCPRoomCheckResult struct {
-	Content []MCPContent `json:"content"`
-}
+// // MCPRoomCheckResult represents the structure of MCP tool call results
+// type MCPRoomCheckResult struct {
+// 	Content []MCPContent `json:"content"`
+// }
 
-type MCPContent struct {
-	Type string `json:"type"`
-	Text string `json:"text"`
-}
+// type MCPContent struct {
+// 	Type string `json:"type"`
+// 	Text string `json:"text"`
+// }
 
-// RoomCheckResult represents the parsed JSON from the text field
-type RoomCheckResult struct {
-	InSameRoom   bool   `json:"in_same_room"`
-	PlayerRoomID string `json:"player_room_id"`
-	Message      string `json:"message"`
-}
+// // RoomCheckResult represents the parsed JSON from the text field
+// type RoomCheckResult struct {
+// 	InSameRoom   bool   `json:"in_same_room"`
+// 	PlayerRoomID string `json:"player_room_id"`
+// 	Message      string `json:"message"`
+// }
 
 func main() {
 
@@ -239,34 +239,58 @@ func main() {
 					// [DIRECT CALL TO MCP]
 					strResult, err := dungeonMasterToolsAgent.DirectExecuteTool(ctx, dungeonMasterConfig,
 						&ai.ToolRequest{
-							Name:  "c&d_is_player_in_same_room_as_npc",
+							Name: "c&d_is_player_in_same_room_as_npc",
 							Input: map[string]any{
 								"name": answer.Name,
 							},
-							Ref:   "",
+							Ref: "",
 						},
 					)
 					if err == nil {
-						ui.Println(ui.Blue, "Ⓜ️ Information Message:\n", strResult)
+						//ui.Println(ui.Blue, "Ⓜ️ Information Message:\n", strResult)
 
-						// Parse strResult into MCPResult structure
-						resultBytes, _ := json.Marshal(strResult)
-						
-						var mcpResult MCPRoomCheckResult
-						json.Unmarshal(resultBytes, &mcpResult)
+						type RoomCheckResult struct {
+							InSameRoom   bool   `json:"in_same_room"`
+							PlayerRoomID string `json:"player_room_id"`
+							Message      string `json:"message"`
+						}
 
-						fmt.Println("🛑 MCP Result Content:", mcpResult)
+						type MCPResponse struct {
+							Content []struct {
+								Text string `json:"text"`
+								Type string `json:"type"`
+							} `json:"content"`
+						}
 
-						
+						var mcpResp MCPResponse
+						err := json.Unmarshal([]byte(strResult), &mcpResp)
+						if err != nil {
+							ui.Println(ui.Red, "❌ Error parsing MCP response:", err)
+						}
+
+						var roomCheck RoomCheckResult
+						if len(mcpResp.Content) > 0 {
+							json.Unmarshal([]byte(mcpResp.Content[0].Text), &roomCheck)
+						}
+
+						ui.Println(ui.Green, "❇️ MCP Tool Response Message:", mcpResp)
+						ui.Println(ui.Blue, "Ⓜ️ Information Message (Room Check):", roomCheck)
+
+						if !roomCheck.InSameRoom {
+							ui.Printf(ui.Red, "❌ You cannot talk to %q because you are not in the same room (your room: %s).\n", answer.Name, roomCheck.PlayerRoomID)
+							continue
+						} else {
+							if exists {
+								selectedAgent = agent
+								ui.Printf(ui.Pink, "👋 You are now speaking to %s.\n", selectedAgent.Name)
+								continue
+							} else {
+								ui.Printf(ui.Red, "❌ Agent %q not found. Staying with %s.\n", value, selectedAgent.Name)
+							}
+						}
+
 					}
 
-					if exists {
-						selectedAgent = agent
-						ui.Printf(ui.Pink, "👋 You are now speaking to %s.\n", selectedAgent.Name)
-						continue
-					} else {
-						ui.Printf(ui.Red, "❌ Agent %q not found. Staying with %s.\n", value, selectedAgent.Name)
-					}
 				}
 
 			}
