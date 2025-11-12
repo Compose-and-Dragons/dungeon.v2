@@ -73,6 +73,19 @@ services:
       retries: 3
       start_period: 40s
 
+  mcp-inspector:
+    image: ghcr.io/modelcontextprotocol/inspector:latest
+    command: ["--config", "/app/mcp.json"]
+    ports:
+      - 6274:6274
+      - 6277:6277
+    environment:
+      HOST: 0.0.0.0
+      ALLOWED_ORIGINS: "http://0.0.0.0:6274,http://localhost:6274"
+      MCP_AUTO_OPEN_ENABLED: false
+    depends_on:
+      - mcp-gateway
+      
 configs:
   catalog.yaml:
     content: |
