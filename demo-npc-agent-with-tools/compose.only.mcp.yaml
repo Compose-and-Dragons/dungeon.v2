@@ -20,8 +20,6 @@ services:
       - source: catalog.yaml
         target:
           /mcp/catalog.yaml
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       mcp-fancy-names:
         condition: service_healthy
