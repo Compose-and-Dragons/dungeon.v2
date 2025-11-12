@@ -19,7 +19,7 @@ services:
         WORKDIR /app/demo-agent
         RUN go mod tidy
         RUN go build -o sorcerer-agent main.go
-        #ENTRYPOINT ["./sorcerer-agent"]
+        ENTRYPOINT ["./sorcerer-agent"]
     environment:
 
       SORCERER_NAME: Elara
@@ -61,8 +61,6 @@ services:
       - source: catalog.yaml
         target:
           /mcp/catalog.yaml
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       # mcp-fancy-names:
       #   condition: service_healthy
