@@ -8,5 +8,5 @@ theme: default
 <!--
 ![img](../architecture/game.drawio.png)
 -->
-
+![qrcode](./qr-code.png)
 
